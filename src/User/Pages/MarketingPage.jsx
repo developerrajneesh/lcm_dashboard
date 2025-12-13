@@ -1,8 +1,12 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { FiFacebook, FiMail, FiMessageSquare, FiArrowRight } from "react-icons/fi";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FiFacebook, FiMail, FiMessageSquare, FiArrowRight, FiPhone, FiX } from "react-icons/fi";
 
 const MarketingPage = () => {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [comingSoonService, setComingSoonService] = useState("");
+  const navigate = useNavigate();
+
   const marketingOptions = [
     {
       id: 1,
@@ -11,18 +15,18 @@ const MarketingPage = () => {
         "Reach your target audience with precision targeting and powerful analytics",
       icon: FiFacebook,
       color: "#1877F2",
-      stats: { engagement: "92%", roi: "3.5x", time: "24h" },
       link: "/user/meta-ads",
+      comingSoon: false,
     },
     {
       id: 2,
-      title: "Email Marketing",
+      title: "IVR",
       description:
-        "Create effective email campaigns that convert with our templates",
-      icon: FiMail,
-      color: "#EA4335",
-      stats: { engagement: "85%", roi: "2.8x", time: "12h" },
-      link: "/user/email-marketing",
+        "Interactive Voice Response system for automated customer engagement",
+      icon: FiPhone,
+      color: "#10B981",
+      link: "/user/ivr",
+      comingSoon: false,
     },
     {
       id: 3,
@@ -30,10 +34,28 @@ const MarketingPage = () => {
       description: "Send targeted text messages with high open rates",
       icon: FiMessageSquare,
       color: "#8E44AD",
-      stats: { engagement: "95%", roi: "3.2x", time: "1h" },
       link: "/user/sms-marketing",
+      comingSoon: true,
+    },
+    {
+      id: 4,
+      title: "Email Marketing",
+      description:
+        "Create effective email campaigns that convert with our templates",
+      icon: FiMail,
+      color: "#EA4335",
+      link: "/user/email-marketing",
+      comingSoon: true,
     },
   ];
+
+  const handleServiceClick = (option, e) => {
+    if (option.comingSoon) {
+      e.preventDefault();
+      setComingSoonService(option.title);
+      setShowComingSoon(true);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -49,13 +71,28 @@ const MarketingPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {marketingOptions.map((option) => {
           const Icon = option.icon;
+          const Component = option.comingSoon ? "div" : Link;
+          const props = option.comingSoon
+            ? {
+                onClick: (e) => handleServiceClick(option, e),
+                className:
+                  "bg-white rounded-lg border-2 border-l-4 border-gray-200 hover:shadow-lg transition-all duration-200 p-6 cursor-pointer relative",
+                style: { borderLeftColor: option.color },
+              }
+            : {
+                to: option.link,
+                className:
+                  "bg-white rounded-lg border-2 border-l-4 border-gray-200 hover:shadow-lg transition-all duration-200 p-6 relative",
+                style: { borderLeftColor: option.color },
+              };
+
           return (
-            <Link
-              key={option.id}
-              to={option.link}
-              className="bg-white rounded-lg border-2 border-l-4 border-gray-200 hover:shadow-lg transition-all duration-200 p-6"
-              style={{ borderLeftColor: option.color }}
-            >
+            <Component key={option.id} {...props}>
+              {option.comingSoon && (
+                <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">
+                  Coming Soon
+                </div>
+              )}
               <div className="flex items-center gap-4 mb-4">
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center"
@@ -67,40 +104,51 @@ const MarketingPage = () => {
               </div>
               <p className="text-gray-600 mb-6">{option.description}</p>
 
-              <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-200">
-                <div>
-                  <p className="text-lg font-bold" style={{ color: option.color }}>
-                    {option.stats.engagement}
-                  </p>
-                  <p className="text-xs text-gray-600">Engagement</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold" style={{ color: option.color }}>
-                    {option.stats.roi}
-                  </p>
-                  <p className="text-xs text-gray-600">ROI</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold" style={{ color: option.color }}>
-                    {option.stats.time}
-                  </p>
-                  <p className="text-xs text-gray-600">Setup</p>
-                </div>
-              </div>
-
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium" style={{ color: option.color }}>
-                  Get Started
+                  {option.comingSoon ? "Learn More" : "Get Started"}
                 </span>
                 <FiArrowRight
                   className="w-5 h-5"
                   style={{ color: option.color }}
                 />
               </div>
-            </Link>
+            </Component>
           );
         })}
       </div>
+
+      {/* Coming Soon Modal */}
+      {showComingSoon && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowComingSoon(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🚀</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Coming Soon!
+              </h2>
+              <p className="text-gray-600 mb-6">
+                <span className="font-semibold">{comingSoonService}</span> is currently under
+                development. We're working hard to bring you this amazing feature soon!
+              </p>
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors w-full"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Info Section */}
       <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
@@ -109,7 +157,7 @@ const MarketingPage = () => {
         </h3>
         <p className="text-gray-700 mb-4">
           Each marketing channel has its strengths. Meta Ads is great for reaching
-          new audiences, Email Marketing excels at nurturing existing customers, and
+          new audiences, IVR provides automated customer engagement, Email Marketing excels at nurturing existing customers, and
           SMS Marketing provides instant engagement.
         </p>
         <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">

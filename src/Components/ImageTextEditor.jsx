@@ -140,10 +140,17 @@ const ImageTextEditor = () => {
   const [error, setError] = useState(null);
   const [savedData, setSavedData] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categories, setCategories] = useState([]);
   const imageRefs = useRef({});
 
   // API Base URL - use the backend API
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   // Load existing data if in edit mode
   useEffect(() => {
@@ -151,6 +158,18 @@ const ImageTextEditor = () => {
       loadWorkshopForEdit(editId);
     }
   }, [editId]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories/active`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        setCategories(result.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
 
   const loadWorkshopForEdit = async (id) => {
     setIsLoading(true);
@@ -161,6 +180,9 @@ const ImageTextEditor = () => {
 
       if (result.success && result.data) {
         setIsEditMode(true);
+        if (result.data.category) {
+          setSelectedCategory(result.data.category._id || result.data.category);
+        }
         const loadedImages = result.data.images.map((img) => ({
           id: Date.now() + Math.random(),
           imageBase64: img.imageUrl || img.imageBase64,
@@ -348,11 +370,17 @@ const ImageTextEditor = () => {
       return;
     }
 
+    if (!selectedCategory) {
+      setError('Please select a category');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const dataToSave = {
+        category: selectedCategory,
         images: images.map((img) => ({
           imageUrl: img.imageUrl, // Use existing S3 URL if available
           imageBase64: img.imageBase64, // Or send base64 if new/changed
@@ -458,7 +486,7 @@ const ImageTextEditor = () => {
               )}
               <button
                 onClick={handleSave}
-                disabled={isLoading || images.length === 0}
+                disabled={isLoading || images.length === 0 || !selectedCategory}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600"
               >
                 <FiSave className="w-5 h-5" />
@@ -469,6 +497,31 @@ const ImageTextEditor = () => {
                   : 'Save Workshop'}
               </button>
             </div>
+          </div>
+          {/* Category Selection */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full md:w-auto min-w-[250px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+              disabled={isEditMode}
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            {categories.length === 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                No categories available. <a href="/admin/category-management" className="text-indigo-600 hover:underline">Create one here</a>
+              </p>
+            )}
           </div>
         </div>
 

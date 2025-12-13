@@ -6,6 +6,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UsersList from "./pages/UsersList";
 import ImageTextEditor from "../Components/ImageTextEditor";
 import CreativeManagement from "./pages/CreativeManagement";
+import CategoryManagement from "./pages/CategoryManagement";
+import ChatSupport from "./pages/ChatSupport";
+import IvrRequests from "./pages/IvrRequests";
 
 const AdminRoutes = () => {
   return (
@@ -20,7 +23,10 @@ const AdminRoutes = () => {
                 <Route path="/image-text-editor" element={<ImageTextEditor />} />
                 <Route path="/image-text-editor/:id" element={<ImageTextEditor />} />
                 <Route path="/creative-management" element={<CreativeManagement />} />
+                <Route path="/category-management" element={<CategoryManagement />} />
                 <Route path="/users" element={<UsersList />} />
+                <Route path="/chat-support" element={<ChatSupport />} />
+                <Route path="/ivr-requests" element={<IvrRequests />} />
                 <Route path="/settings" element={<AdminSettings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>

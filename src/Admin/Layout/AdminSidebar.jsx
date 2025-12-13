@@ -7,6 +7,9 @@ import {
   FiSettings,
   FiX,
   FiShield,
+  FiTag,
+  FiMessageCircle,
+  FiPhone,
 } from "react-icons/fi";
 
 const AdminSidebar = ({ sidebarOpen, toggleSidebar }) => {
@@ -15,6 +18,9 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar }) => {
     { path: "/admin/users", icon: FiUsers, label: "Users" },
     { path: "/admin/image-text-editor", icon: FiImage, label: "Create Upload" },
     { path: "/admin/creative-management", icon: FiShield, label: "Creative Management" },
+    { path: "/admin/category-management", icon: FiTag, label: "Category Management" },
+    { path: "/admin/chat-support", icon: FiMessageCircle, label: "Chat Support" },
+    { path: "/admin/ivr-requests", icon: FiPhone, label: "IVR Requests" },
     { path: "/admin/settings", icon: FiSettings, label: "Settings" },
   ];
 

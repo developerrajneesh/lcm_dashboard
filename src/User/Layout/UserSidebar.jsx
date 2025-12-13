@@ -2,19 +2,22 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   FiHome,
-  FiFacebook,
   FiTrendingUp,
   FiImage,
   FiX,
   FiSettings,
+  FiCreditCard,
+  FiMessageCircle,
+  FiFacebook,
 } from "react-icons/fi";
 
 const UserSidebar = ({ sidebarOpen, toggleSidebar }) => {
   const menuItems = [
     { path: "/user", icon: FiHome, label: "Dashboard" },
-    { path: "/user/meta-ads", icon: FiFacebook, label: "Meta Ads" },
     { path: "/user/marketing", icon: FiTrendingUp, label: "Marketing" },
     { path: "/user/creative-workshop", icon: FiImage, label: "Creative Workshop" },
+    { path: "/user/subscription", icon: FiCreditCard, label: "Subscription" },
+    { path: "/user/chat-support", icon: FiMessageCircle, label: "Chat Support" },
     { path: "/user/settings", icon: FiSettings, label: "Settings" },
   ];
 

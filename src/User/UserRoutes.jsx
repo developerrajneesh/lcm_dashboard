@@ -8,6 +8,9 @@ import MarketingPage from "./Pages/MarketingPage";
 import CreativeWorkshopPage from "./Pages/CreativeWorkshopPage";
 import CreativeWorkshopDetail from "./Pages/CreativeWorkshopDetail";
 import SettingsPage from "./Pages/SettingsPage";
+import SubscriptionPage from "./Pages/SubscriptionPage";
+import ChatSupport from "./Pages/ChatSupport";
+import IvrFormPage from "./Pages/IvrFormPage";
 
 const UserRoutes = () => {
   return (
@@ -23,6 +26,9 @@ const UserRoutes = () => {
                 <Route path="/marketing" element={<MarketingPage />} />
                 <Route path="/creative-workshop" element={<CreativeWorkshopPage />} />
                 <Route path="/creative-workshop/:id" element={<CreativeWorkshopDetail />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/chat-support" element={<ChatSupport />} />
+                <Route path="/ivr" element={<IvrFormPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/user" replace />} />
               </Routes>

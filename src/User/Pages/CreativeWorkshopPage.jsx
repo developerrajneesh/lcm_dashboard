@@ -28,10 +28,24 @@ const CreativeWorkshopPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [groupedWorkshops, setGroupedWorkshops] = useState({});
 
   useEffect(() => {
     fetchWorkshops();
   }, []);
+
+  useEffect(() => {
+    // Group workshops by category
+    const grouped = {};
+    workshops.forEach((workshop) => {
+      const categoryName = workshop.category?.name || "Uncategorized";
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = [];
+      }
+      grouped[categoryName].push(workshop);
+    });
+    setGroupedWorkshops(grouped);
+  }, [workshops]);
 
   const fetchWorkshops = async () => {
     try {
@@ -48,6 +62,7 @@ const CreativeWorkshopPage = () => {
             id: workshop.id,
             thumbnail: workshop.thumbnail,
             imageCount: workshop.imageCount,
+            category: workshop.category,
           });
         });
         setWorkshops(result.data);
@@ -108,59 +123,74 @@ const CreativeWorkshopPage = () => {
           <p className="empty-hint">Admin needs to create workshops first</p>
         </div>
       ) : (
-        <div className="workshop-grid">
-          {workshops.map((workshop) => {
-            // Backend returns thumbnail directly in the list endpoint
-            const thumbnail = workshop.thumbnail;
-            const imageCount = workshop.imageCount || 0;
-            const workshopId = workshop.id || workshop._id;
-
-            // Check if thumbnail is valid (not null, not empty, not undefined)
-            const hasValidThumbnail = thumbnail && thumbnail.trim() !== "" && thumbnail !== "null";
-
+        <div className="workshop-categories">
+          {Object.keys(groupedWorkshops).map((categoryName) => {
+            const categoryWorkshops = groupedWorkshops[categoryName];
             return (
-              <div
-                key={workshopId}
-                className="workshop-card"
-                onClick={() => {
-                  navigate(`/user/creative-workshop/${workshopId}`);
-                }}
-              >
-                {hasValidThumbnail && !imageErrors[workshopId] ? (
-                  <img
-                    src={getImageUrl(thumbnail)}
-                    alt="Workshop thumbnail"
-                    className="workshop-thumbnail"
-                    onError={(e) => {
-                      console.error("Failed to load thumbnail for workshop", workshopId, ":", thumbnail, e);
-                      setImageErrors((prev) => ({
-                        ...prev,
-                        [workshopId]: true,
-                      }));
-                    }}
-                    onLoad={() => {
-                      console.log("Image loaded successfully for workshop", workshopId, ":", thumbnail);
-                    }}
-                  />
-                ) : (
-                  <div className="workshop-thumbnail-placeholder">
-                    <FiImage className="placeholder-icon" />
-                    <span>No Image</span>
-                    {!hasValidThumbnail && (
-                      <span style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
-                        (No thumbnail URL)
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="workshop-card-content">
-                  <h3 className="workshop-card-title">Workshop</h3>
-                  <p className="workshop-card-subtitle">
-                    {imageCount} {imageCount === 1 ? "image" : "images"}
-                  </p>
-                  <p className="workshop-card-date">
-                    {formatDate(workshop.createdAt || new Date())}
-                  </p>
+              <div key={categoryName} className="category-section">
+                <div className="category-header">
+                  <h2 className="category-name">{categoryName}</h2>
+                  <span className="category-count">
+                    {categoryWorkshops.length} {categoryWorkshops.length === 1 ? "workshop" : "workshops"}
+                  </span>
+                </div>
+                <div className="workshop-grid">
+                  {categoryWorkshops.map((workshop) => {
+                    // Backend returns thumbnail directly in the list endpoint
+                    const thumbnail = workshop.thumbnail;
+                    const imageCount = workshop.imageCount || 0;
+                    const workshopId = workshop.id || workshop._id;
+
+                    // Check if thumbnail is valid (not null, not empty, not undefined)
+                    const hasValidThumbnail = thumbnail && thumbnail.trim() !== "" && thumbnail !== "null";
+
+                    return (
+                      <div
+                        key={workshopId}
+                        className="workshop-card"
+                        onClick={() => {
+                          navigate(`/user/creative-workshop/${workshopId}`);
+                        }}
+                      >
+                        {hasValidThumbnail && !imageErrors[workshopId] ? (
+                          <img
+                            src={getImageUrl(thumbnail)}
+                            alt="Workshop thumbnail"
+                            className="workshop-thumbnail"
+                            onError={(e) => {
+                              console.error("Failed to load thumbnail for workshop", workshopId, ":", thumbnail, e);
+                              setImageErrors((prev) => ({
+                                ...prev,
+                                [workshopId]: true,
+                              }));
+                            }}
+                            onLoad={() => {
+                              console.log("Image loaded successfully for workshop", workshopId, ":", thumbnail);
+                            }}
+                          />
+                        ) : (
+                          <div className="workshop-thumbnail-placeholder">
+                            <FiImage className="placeholder-icon" />
+                            <span>No Image</span>
+                            {!hasValidThumbnail && (
+                              <span style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
+                                (No thumbnail URL)
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div className="workshop-card-content">
+                          <h3 className="workshop-card-title">Workshop</h3>
+                          <p className="workshop-card-subtitle">
+                            {imageCount} {imageCount === 1 ? "image" : "images"}
+                          </p>
+                          <p className="workshop-card-date">
+                            {formatDate(workshop.createdAt || new Date())}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

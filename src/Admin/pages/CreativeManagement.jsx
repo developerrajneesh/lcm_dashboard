@@ -8,7 +8,6 @@ const CreativeManagement = () => {
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedWorkshop, setSelectedWorkshop] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [workshopToDelete, setWorkshopToDelete] = useState(null);
   const navigate = useNavigate();
@@ -63,15 +62,6 @@ const CreativeManagement = () => {
     } catch (err) {
       alert("Error deleting workshop: " + err.message);
     }
-  };
-
-  const handleView = (workshop) => {
-    setSelectedWorkshop(workshop);
-  };
-
-  const handleEdit = (workshop) => {
-    // Navigate to editor with workshop data
-    navigate(`/admin/image-text-editor?edit=${workshop.id}`);
   };
 
   const formatDate = (dateString) => {
@@ -155,18 +145,6 @@ const CreativeManagement = () => {
                 </div>
                 <div className="workshop-actions">
                   <button
-                    className="btn-view"
-                    onClick={() => handleView(workshop)}
-                  >
-                    👁️ View
-                  </button>
-                  <button
-                    className="btn-edit"
-                    onClick={() => handleEdit(workshop)}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
                     className="btn-delete"
                     onClick={() => handleDelete(workshop)}
                   >
@@ -177,63 +155,6 @@ const CreativeManagement = () => {
             ))}
           </div>
         </>
-      )}
-
-      {/* View Modal */}
-      {selectedWorkshop && (
-        <div className="modal-overlay" onClick={() => setSelectedWorkshop(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Workshop Details</h2>
-              <button
-                className="modal-close"
-                onClick={() => setSelectedWorkshop(null)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                <strong>ID:</strong> {selectedWorkshop.id}
-              </p>
-              <p>
-                <strong>Images:</strong> {selectedWorkshop.imageCount}
-              </p>
-              <p>
-                <strong>Created:</strong> {formatDate(selectedWorkshop.createdAt)}
-              </p>
-              {selectedWorkshop.thumbnail && (
-                <div className="modal-thumbnail">
-                  <img
-                    src={selectedWorkshop.thumbnail}
-                    alt="Workshop thumbnail"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/300x200?text=No+Image";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setSelectedWorkshop(null);
-                  handleEdit(selectedWorkshop);
-                }}
-              >
-                Edit Workshop
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setSelectedWorkshop(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Delete Confirmation Modal */}

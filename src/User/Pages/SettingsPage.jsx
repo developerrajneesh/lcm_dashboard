@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiBell, FiLock, FiLogOut, FiCamera, FiX, FiMail, FiPhone } from "react-icons/fi";
+import { FiUser, FiLock, FiLogOut, FiCamera, FiX, FiMail, FiPhone } from "react-icons/fi";
 import "./SettingsPage.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
@@ -27,13 +27,6 @@ const SettingsPage = () => {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  });
-
-  // Notification settings
-  const [notifications, setNotifications] = useState({
-    email: true,
-    campaignUpdates: true,
-    weeklyReports: false,
   });
 
   useEffect(() => {
@@ -120,13 +113,6 @@ const SettingsPage = () => {
     }));
     setError("");
     setSuccess("");
-  };
-
-  const handleNotificationChange = (key) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
   };
 
   const handleSaveProfile = async (e) => {
@@ -269,8 +255,8 @@ const SettingsPage = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="mt-6">
+        <div className="space-y-6 max-w-4xl">
           {/* Profile Settings */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -283,35 +269,73 @@ const SettingsPage = () => {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               {/* Profile Image */}
               <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Profile Image
                 </label>
-                <div className="profile-image-upload-container">
-                  {previewImage ? (
-                    <div className="profile-image-preview">
-                      <img src={previewImage} alt="Profile" />
+                <div className="flex items-start gap-6">
+                  {/* Current Profile Image */}
+                  <div className="flex-shrink-0">
+                    {previewImage ? (
+                      <div className="relative">
+                        <img
+                          src={previewImage}
+                          alt="Profile"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                          onClick={removeImage}
+                          title="Remove image"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
+                        <FiUser className="w-10 h-10 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Area */}
+                  <div className="flex-1">
+                    <label className="block">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+                        <div className="text-center">
+                          <div className="flex justify-center mb-3">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                              <FiCamera className="w-6 h-6 text-blue-600" />
+                            </div>
+                          </div>
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            {previewImage ? "Change Profile Image" : "Upload Profile Image"}
+                          </p>
+                          <p className="text-xs text-gray-500 mb-3">
+                            Click to browse or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            PNG, JPG, GIF up to 5MB
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                    </label>
+                    {previewImage && (
                       <button
                         type="button"
-                        className="remove-image-btn"
                         onClick={removeImage}
+                        className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium"
                       >
-                        <FiX />
+                        Remove Image
                       </button>
-                    </div>
-                  ) : (
-                    <label className="profile-image-upload-label">
-                      <div className="profile-image-upload-placeholder">
-                        <FiCamera className="camera-icon" />
-                        <span>Upload Image</span>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="profile-image-input"
-                      />
-                    </label>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -368,45 +392,6 @@ const SettingsPage = () => {
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </form>
-          </div>
-
-          {/* Notification Settings */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <FiBell className="w-5 h-5 text-green-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
-            </div>
-            <div className="space-y-4">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-gray-700">Email notifications</span>
-                <input
-                  type="checkbox"
-                  checked={notifications.email}
-                  onChange={() => handleNotificationChange("email")}
-                  className="toggle"
-                />
-              </label>
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-gray-700">Campaign updates</span>
-                <input
-                  type="checkbox"
-                  checked={notifications.campaignUpdates}
-                  onChange={() => handleNotificationChange("campaignUpdates")}
-                  className="toggle"
-                />
-              </label>
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-gray-700">Weekly reports</span>
-                <input
-                  type="checkbox"
-                  checked={notifications.weeklyReports}
-                  onChange={() => handleNotificationChange("weeklyReports")}
-                  className="toggle"
-                />
-              </label>
-            </div>
           </div>
 
           {/* Security Settings */}
@@ -467,28 +452,6 @@ const SettingsPage = () => {
                 {saving ? "Updating..." : "Update Password"}
               </button>
             </form>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-                Export Data
-              </button>
-              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-                Download Reports
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
-              >
-                <FiLogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
           </div>
         </div>
       </div>
