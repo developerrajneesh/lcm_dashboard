@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiX } from "react-icons/fi";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiX, FiGift } from "react-icons/fi";
 import "./SignUp.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Note: Signup page should always be accessible
   // If user is already logged in, they can still access signup (they might want to create another account)
@@ -18,11 +19,23 @@ const SignUp = () => {
     password: "",
     phoneNumber: "",
     profileImage: null,
+    referralCode: "",
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setFormData((prev) => ({
+        ...prev,
+        referralCode: refCode.toUpperCase(),
+      }));
+    }
+  }, [searchParams]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -131,6 +144,7 @@ const SignUp = () => {
           password: formData.password,
           phoneNumber: formData.phoneNumber.trim() || undefined,
           profileImage: formData.profileImage || undefined,
+          referralCode: formData.referralCode.trim().toUpperCase() || undefined,
         }),
       });
 
@@ -281,6 +295,26 @@ const SignUp = () => {
               required
               minLength={8}
             />
+          </div>
+
+          {/* Referral Code */}
+          <div className="form-group">
+            <label htmlFor="referralCode">
+              <FiGift className="input-icon" />
+              Referral Code <span className="hint">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              id="referralCode"
+              name="referralCode"
+              value={formData.referralCode}
+              onChange={handleInputChange}
+              placeholder="Enter referral code if you have one"
+              style={{ textTransform: "uppercase" }}
+            />
+            <small className="form-hint">
+              Enter a referral code to help someone earn ₹50
+            </small>
           </div>
 
           {/* Submit Button */}

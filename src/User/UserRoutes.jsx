@@ -11,6 +11,8 @@ import SettingsPage from "./Pages/SettingsPage";
 import SubscriptionPage from "./Pages/SubscriptionPage";
 import ChatSupport from "./Pages/ChatSupport";
 import IvrFormPage from "./Pages/IvrFormPage";
+import WalletPage from "./Pages/WalletPage";
+import ReferralPage from "./Pages/ReferralPage";
 
 const UserRoutes = () => {
   return (
@@ -27,6 +29,8 @@ const UserRoutes = () => {
                 <Route path="/creative-workshop" element={<CreativeWorkshopPage />} />
                 <Route path="/creative-workshop/:id" element={<CreativeWorkshopDetail />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/wallet" element={<WalletPage />} />
+                <Route path="/referral" element={<ReferralPage />} />
                 <Route path="/chat-support" element={<ChatSupport />} />
                 <Route path="/ivr" element={<IvrFormPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

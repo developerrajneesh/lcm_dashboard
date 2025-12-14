@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-import { FiSend, FiMessageCircle, FiUsers } from "react-icons/fi";
+import { FiSend, FiMessageCircle, FiUsers, FiSearch, FiX } from "react-icons/fi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace("/api/v1", "") || "http://localhost:5000";
@@ -17,6 +17,10 @@ const ChatSupport = () => {
   const [user, setUser] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
   const hasAutoSelectedRef = useRef(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -100,11 +104,81 @@ const ChatSupport = () => {
     setSocket(newSocket);
     // Fetch conversations and auto-select first one on initial load
     fetchConversations(true);
+    // Fetch all users for search
+    fetchAllUsers();
 
     return () => {
       newSocket.disconnect();
     };
   }, [user]);
+
+  // Fetch all users for search
+  const fetchAllUsers = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/all`, {
+        headers: {
+          "user-id": user.id,
+        },
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        // Filter out admin users and current user
+        const regularUsers = result.data.filter(
+          (u) => u.role !== "admin" && String(u.id || u._id) !== String(user.id)
+        );
+        setAllUsers(regularUsers);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  // Handle search
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query.trim().length > 0) {
+      const filtered = allUsers.filter((u) =>
+        (u.name || "").toLowerCase().includes(query.toLowerCase()) ||
+        (u.email || "").toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+      setShowSearchResults(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  };
+
+  // Start conversation with selected user
+  const startConversationWithUser = (selectedUser) => {
+    const userId = selectedUser.id || selectedUser._id;
+    const convId = [user.id, userId].sort().join("_");
+    
+    // Check if conversation already exists
+    const existingConv = conversations.find((c) => c.conversationId === convId);
+    
+    if (existingConv) {
+      // Conversation exists, just select it
+      fetchMessages(existingConv);
+    } else {
+      // Create new conversation object
+      const newConversation = {
+        conversationId: convId,
+        user: selectedUser,
+        lastMessage: null,
+        unreadCount: 0,
+      };
+      setSelectedConversation(newConversation);
+      setMessages([]);
+      // The conversation will be created when first message is sent
+    }
+    
+    // Clear search
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
 
   const fetchConversations = async (autoSelectFirst = false) => {
     try {
@@ -161,21 +235,35 @@ const ChatSupport = () => {
     if (!newMessage.trim() || !socket || !selectedConversation) return;
 
     const userInfo = selectedConversation.user;
+    const receiverId = userInfo._id || userInfo.id;
     const messageText = newMessage.trim();
+    
+    // Ensure conversationId exists (create if needed)
+    let conversationId = selectedConversation.conversationId;
+    if (!conversationId && receiverId) {
+      conversationId = [user.id, receiverId].sort().join("_");
+      // Update selected conversation with the conversationId
+      setSelectedConversation({
+        ...selectedConversation,
+        conversationId: conversationId,
+      });
+    }
+    
     const messageData = {
       senderId: user.id,
-      receiverId: userInfo._id || userInfo.id,
+      receiverId: receiverId,
       message: messageText,
-      conversationId: selectedConversation.conversationId,
+      conversationId: conversationId,
     };
 
     // Optimistically add message to UI immediately
     const tempMessage = {
       _id: `temp_${Date.now()}`,
+      senderId: user.id, // Add senderId for proper alignment check
       sender: { _id: user.id, name: user.name, email: user.email },
       receiver: userInfo,
       message: messageText,
-      conversationId: selectedConversation.conversationId,
+      conversationId: conversationId,
       createdAt: new Date().toISOString(),
       isRead: false,
     };
@@ -186,6 +274,11 @@ const ChatSupport = () => {
 
     // Send via socket
     socket.emit("send_message", messageData);
+    
+    // Update conversation list after sending (to show new conversation if it's the first message)
+    setTimeout(() => {
+      fetchConversations();
+    }, 500);
   };
 
   const formatTime = (dateString) => {
@@ -208,10 +301,74 @@ const ChatSupport = () => {
       {/* Conversations List */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-3">
             <FiUsers className="w-5 h-5" />
             Conversations
           </h2>
+          {/* Search Bar */}
+          <div className="relative">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search users by name..."
+                className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setShowSearchResults(false);
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                {searchResults.map((searchUser) => {
+                  const userId = searchUser.id || searchUser._id;
+                  return (
+                    <button
+                      key={userId}
+                      onClick={() => startConversationWithUser(searchUser)}
+                      className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center gap-3"
+                    >
+                      {searchUser.profileImage ? (
+                        <img
+                          src={searchUser.profileImage}
+                          alt={searchUser.name || "User"}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
+                          {(searchUser.name || "U")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {searchUser.name || "User"}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {searchUser.email || ""}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {showSearchResults && searchQuery && searchResults.length === 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm text-gray-500">
+                No users found
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto min-h-0">
           {conversations.length === 0 ? (
@@ -310,7 +467,10 @@ const ChatSupport = () => {
                 </div>
               ) : (
                 messages.map((msg, index) => {
-                  const isOwnMessage = msg.sender?._id === user.id || msg.sender === user.id;
+                  // Check if message is from current admin user
+                  // Backend populates senderId as an object, so check both senderId._id and senderId directly
+                  const senderId = msg.senderId?._id || msg.senderId || msg.sender?._id || msg.sender;
+                  const isOwnMessage = String(senderId) === String(user.id);
                   return (
                     <div
                       key={index}

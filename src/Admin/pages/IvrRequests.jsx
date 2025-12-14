@@ -210,16 +210,16 @@ const IvrRequests = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            {request.requestedBy?.profileImage ? (
+                            {request.userId?.profileImage ? (
                               <img
                                 className="h-10 w-10 rounded-full object-cover"
-                                src={request.requestedBy.profileImage}
-                                alt={request.requestedBy.name}
+                                src={request.userId.profileImage}
+                                alt={request.userId.name || request.fullName}
                               />
                             ) : (
                               <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
                                 <span className="text-indigo-600 font-semibold">
-                                  {request.requestedBy?.name?.[0] || "U"}
+                                  {(request.userId?.name || request.fullName)?.[0] || "U"}
                                 </span>
                               </div>
                             )}
@@ -239,7 +239,7 @@ const IvrRequests = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{request.userId}</div>
+                        <div className="text-sm font-medium text-gray-900">{request.accountUserId || (typeof request.userId === 'string' ? request.userId : 'N/A')}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
@@ -307,11 +307,11 @@ const IvrRequests = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">User ID</label>
-                        <p className="mt-1 text-sm text-gray-900 font-mono">{selectedRequest.userId}</p>
+                        <p className="mt-1 text-sm text-gray-900 font-mono">{selectedRequest.accountUserId || (typeof selectedRequest.userId === 'string' ? selectedRequest.userId : 'N/A')}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Password</label>
-                        <p className="mt-1 text-sm text-gray-900 font-mono">{selectedRequest.password}</p>
+                        <p className="mt-1 text-sm text-gray-900 font-mono">{selectedRequest.accountPassword || selectedRequest.password || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -346,7 +346,8 @@ const IvrRequests = () => {
                           onClick={() => {
                             const link = document.createElement('a');
                             link.href = selectedRequest.gstCertificate;
-                            link.download = `GST_Certificate_${selectedRequest.userId}_${selectedRequest._id}.${selectedRequest.gstCertificate.split('.').pop().split('?')[0]}`;
+                            const userId = selectedRequest.accountUserId || (typeof selectedRequest.userId === 'string' ? selectedRequest.userId : selectedRequest._id);
+                            link.download = `GST_Certificate_${userId}_${selectedRequest._id}.${selectedRequest.gstCertificate.split('.').pop().split('?')[0]}`;
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);

@@ -45,6 +45,13 @@ const ChatSupport = () => {
     newSocket.on("receive_message", (data) => {
       if (data.success && data.data) {
         const message = data.data;
+        // Only process messages from admin (not own messages)
+        const senderId = message.senderId?._id || message.senderId || message.sender?._id || message.sender;
+        if (String(senderId) === String(user.id)) {
+          // This is our own message, ignore it (handled by message_sent)
+          return;
+        }
+        
         setMessages((prev) => {
           // Check if message already exists to avoid duplicates
           const exists = prev.some((m) => {
@@ -53,8 +60,9 @@ const ChatSupport = () => {
               return String(m._id) === String(message._id);
             }
             // Check by content, sender, and timestamp (within 5 seconds)
+            const mSenderId = m.senderId?._id || m.senderId || m.sender?._id || m.sender;
             return m.message === message.message && 
-                   (m.sender?._id === message.sender?._id || m.sender === message.sender?._id) &&
+                   String(mSenderId) === String(senderId) &&
                    Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 5000;
           });
           if (exists) return prev;
@@ -67,38 +75,46 @@ const ChatSupport = () => {
     newSocket.on("message_sent", (data) => {
       if (data.success && data.data) {
         const message = data.data;
+        // Only process messages sent by current user
+        const senderId = message.senderId?._id || message.senderId || message.sender?._id || message.sender;
+        if (String(senderId) !== String(user.id)) {
+          // This is not our message, ignore it (handled by receive_message)
+          return;
+        }
+        
         setMessages((prev) => {
-          // Remove any temporary messages with the same content and sender
+          // Remove any temporary messages with the same content
           const filtered = prev.filter((m) => {
-            // Keep real messages
-            if (m._id && !m._id.startsWith("temp_")) {
-              // If it's a real message, check if it's a duplicate
-              return !(String(m._id) === String(message._id) || 
-                      (m.message === message.message && 
-                       m.sender?._id === message.sender?._id &&
-                       Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 5000));
-            }
             // Remove temp messages that match this message
-            return !(m._id?.startsWith("temp_") && 
-                     m.message === message.message && 
-                     (m.sender?._id === message.sender?._id || m.sender === message.sender?._id));
+            if (m._id?.startsWith("temp_") && m.message === message.message) {
+              return false;
+            }
+            // Check if this real message is a duplicate
+            if (m._id && message._id && String(m._id) === String(message._id)) {
+              return false; // Remove duplicate
+            }
+            // Keep all other messages
+            return true;
           });
           
-          // Check if message already exists
+          // Check if message already exists (by ID)
           const exists = filtered.some((m) => {
             if (m._id && message._id) {
               return String(m._id) === String(message._id);
             }
-            return m.message === message.message && 
-                   (m.sender?._id === message.sender?._id || m.sender === message.sender?._id) &&
-                   Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 5000;
+            return false;
           });
           
-          if (exists) return filtered;
+          if (exists) {
+            // Message already exists, just remove from pending
+            pendingMessagesRef.current.delete(message.message);
+            return filtered;
+          }
           
           // Remove from pending messages
           pendingMessagesRef.current.delete(message.message);
           
+          // Add the real message
           return [...filtered, message];
         });
         setTimeout(scrollToBottom, 100);
@@ -258,7 +274,9 @@ const ChatSupport = () => {
           </div>
         ) : (
           messages.map((msg, index) => {
-            const isOwnMessage = msg.sender?._id === user.id || msg.sender === user.id;
+            // Check if message is from current user
+            const senderId = msg.senderId?._id || msg.senderId || msg.sender?._id || msg.sender;
+            const isOwnMessage = String(senderId) === String(user.id);
             // Use unique key: _id if available, otherwise use index + message + timestamp
             const messageKey = msg._id || `msg_${index}_${msg.message}_${msg.createdAt}`;
             return (

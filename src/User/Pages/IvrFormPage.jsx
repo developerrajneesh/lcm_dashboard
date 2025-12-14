@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPhone, FiUpload, FiUser, FiMail, FiPhoneCall, FiBriefcase, FiMapPin, FiFileText, FiCheckCircle, FiClock, FiX } from "react-icons/fi";
+import { FiPhone, FiUser, FiMail, FiPhoneCall, FiBriefcase, FiMapPin, FiCheckCircle, FiClock, FiX } from "react-icons/fi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 
@@ -21,13 +21,10 @@ const IvrFormPage = () => {
     companyName: "",
     businessType: "",
     state: "",
-    gstCertificate: null,
   });
-
-  const [gstPreview, setGstPreview] = useState(null);
   const [user, setUser] = useState(null);
 
-  // Check for existing IVR request on mount
+  // Check for existing IVR request on mount and when component is focused
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
@@ -44,8 +41,29 @@ const IvrFormPage = () => {
     }
   }, []);
 
+  // Re-check when user navigates back to this page
+  useEffect(() => {
+    const handleFocus = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          if (parsedUser.id) {
+            checkExistingRequest(parsedUser.id);
+          }
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+        }
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
   const checkExistingRequest = async (userId) => {
     try {
+      setCheckingStatus(true);
       const response = await fetch(`${API_BASE_URL}/ivr-requests/my-requests`, {
         headers: {
           "user-id": userId,
@@ -53,13 +71,20 @@ const IvrFormPage = () => {
       });
       const result = await response.json();
 
+      console.log("IVR Request Check Result:", result);
+
       if (result.success && result.data && result.data.length > 0) {
         // Get the most recent request
         const latestRequest = result.data[0];
+        console.log("Found existing request:", latestRequest);
         setExistingRequest(latestRequest);
+      } else {
+        console.log("No existing IVR request found");
+        setExistingRequest(null);
       }
     } catch (err) {
       console.error("Error checking existing request:", err);
+      setExistingRequest(null);
     } finally {
       setCheckingStatus(false);
     }
@@ -82,35 +107,6 @@ const IvrFormPage = () => {
     setError("");
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-      if (!allowedTypes.includes(file.type)) {
-        setError("Please upload a PDF, JPG, or PNG file");
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError("File size should be less than 10MB");
-        return;
-      }
-
-      // Convert to base64 for preview and upload
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setGstPreview(reader.result);
-        setFormData((prev) => ({
-          ...prev,
-          gstCertificate: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
-      setError("");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,7 +115,10 @@ const IvrFormPage = () => {
 
     // Check if user already has a pending or approved request (allow re-apply if rejected)
     if (existingRequest && existingRequest.status !== "rejected") {
-      setError("You have already submitted an IVR request. Please wait for admin approval.");
+      const errorMessage = existingRequest.status === "pending"
+        ? "You have already submitted an IVR request. Please wait for admin approval."
+        : "You already have an approved IVR account. Please use your existing credentials.";
+      setError(errorMessage);
       setLoading(false);
       return;
     }
@@ -127,7 +126,7 @@ const IvrFormPage = () => {
     // Validation
     if (!formData.fullName || !formData.mobileNumber || !formData.emailId || 
         !formData.userId || !formData.password || !formData.companyName || 
-        !formData.state || !formData.gstCertificate) {
+        !formData.state) {
       setError("Please fill all required fields");
       setLoading(false);
       return;
@@ -173,27 +172,23 @@ const IvrFormPage = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setSuccess(true);
-        // Refresh existing request status
+        // Immediately refresh existing request status to show pending screen
         if (user?.id) {
           await checkExistingRequest(user.id);
         }
-        // Reset form after 3 seconds
-        setTimeout(() => {
-          setFormData({
-            fullName: "",
-            mobileNumber: "",
-            emailId: "",
-            userId: "",
-            password: "",
-            companyName: "",
-            businessType: "",
-            state: "",
-            gstCertificate: null,
-          });
-          setGstPreview(null);
-          setSuccess(false);
-        }, 3000);
+        // Reset form
+        setFormData({
+          fullName: "",
+          mobileNumber: "",
+          emailId: "",
+          userId: "",
+          password: "",
+          companyName: "",
+          businessType: "",
+          state: "",
+        });
+        setError("");
+        setSuccess(false);
       } else {
         setError(result.error || result.message || "Failed to submit request");
       }
@@ -220,7 +215,7 @@ const IvrFormPage = () => {
   }
 
   // Show pending status
-  if (existingRequest && existingRequest.status === "pending") {
+  if (existingRequest?.status === "pending") {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-8">
@@ -258,7 +253,7 @@ const IvrFormPage = () => {
   }
 
   // Show approved status with credentials
-  if (existingRequest && existingRequest.status === "approved") {
+  if (existingRequest?.status === "approved") {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-8">
@@ -292,13 +287,14 @@ const IvrFormPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    value={existingRequest.userId}
+                    value={existingRequest.accountUserId || existingRequest.userId || ""}
                     readOnly
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(existingRequest.userId);
+                      const userId = existingRequest.accountUserId || existingRequest.userId || "";
+                      navigator.clipboard.writeText(userId);
                       alert("User ID copied to clipboard!");
                     }}
                     className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
@@ -312,13 +308,14 @@ const IvrFormPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    value={existingRequest.password}
+                    value={existingRequest.accountPassword || existingRequest.password || ""}
                     readOnly
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(existingRequest.password);
+                      const password = existingRequest.accountPassword || existingRequest.password || "";
+                      navigator.clipboard.writeText(password);
                       alert("Password copied to clipboard!");
                     }}
                     className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
@@ -333,7 +330,7 @@ const IvrFormPage = () => {
           <div className="text-center">
             <button
               onClick={() => {
-                window.open("https://voice.whatsupninja.in/", "_blank");
+                window.location.href = "https://voice.whatsupninja.in/";
               }}
               className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 mx-auto"
             >
@@ -346,8 +343,8 @@ const IvrFormPage = () => {
     );
   }
 
-  // Show rejected status
-  if (existingRequest && existingRequest.status === "rejected" && !formData.fullName) {
+  // Show rejected status (only show if form is empty, otherwise show form for re-apply)
+  if (existingRequest?.status === "rejected" && !formData.fullName) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-8">
@@ -393,9 +390,7 @@ const IvrFormPage = () => {
                   companyName: "",
                   businessType: "",
                   state: "",
-                  gstCertificate: null,
                 });
-                setGstPreview(null);
                 setError("");
               }}
               className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 mx-auto"
@@ -585,67 +580,6 @@ const IvrFormPage = () => {
                 required
               />
             </div>
-          </div>
-        </div>
-
-        <hr className="my-8 border-gray-200" />
-
-        {/* GST Details Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <FiFileText className="w-5 h-5 text-indigo-600" />
-            GST Details
-          </h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload GST Certificate <span className="text-red-500">*</span>
-              <span className="text-gray-500 text-xs ml-2">(PDF / JPG / PNG allowed)</span>
-            </label>
-            {gstPreview ? (
-              <div className="mt-2">
-                <div className="relative inline-block">
-                  {gstPreview.startsWith("data:image") ? (
-                    <img
-                      src={gstPreview}
-                      alt="GST Certificate Preview"
-                      className="max-w-xs max-h-48 rounded-lg border border-gray-300"
-                    />
-                  ) : (
-                    <div className="px-4 py-8 bg-gray-100 rounded-lg border border-gray-300">
-                      <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">PDF File Selected</p>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGstPreview(null);
-                      setFormData((prev) => ({ ...prev, gstCertificate: null }));
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
-                    <span className="text-xs">×</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <FiUpload className="w-8 h-8 mb-2 text-gray-400" />
-                  <p className="mb-2 text-sm text-gray-500">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">PDF, JPG or PNG (MAX. 10MB)</p>
-                </div>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  required
-                />
-              </label>
-            )}
           </div>
         </div>
 
