@@ -13,7 +13,8 @@ import {
   FiXCircle
 } from "react-icons/fi";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -188,11 +189,18 @@ const UserDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
-        </h1>
-        <p className="text-gray-600 mt-1">Here's your overview and quick access to everything you need.</p>
+      <div className="flex items-center gap-4">
+        <img 
+          src="/LCMLOGO.png" 
+          alt="LCM Logo" 
+          className="h-12 w-auto"
+        />
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+          </h1>
+          <p className="text-gray-600 mt-1">Here's your overview and quick access to everything you need.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}

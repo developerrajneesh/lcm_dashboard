@@ -8,7 +8,6 @@ import {
   FiSettings,
   FiCreditCard,
   FiMessageCircle,
-  FiFacebook,
   FiDollarSign,
   FiGift,
 } from "react-icons/fi";
@@ -45,9 +44,11 @@ const UserSidebar = ({ sidebarOpen, toggleSidebar }) => {
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <FiFacebook className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="/LCMLOGO.png" 
+                alt="LCM Logo" 
+                className="h-8 w-auto"
+              />
               <span className="text-xl font-bold text-gray-900">LCM</span>
             </div>
             <button

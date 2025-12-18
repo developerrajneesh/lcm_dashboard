@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import "./Login.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const Login = () => {
       // Don't redirect on error, just stay on login page
     }
   }, [navigate]);
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -145,100 +147,154 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <div className="login-container">
-        <div className="login-header">
-          <h1>Welcome Back</h1>
-          <p>Sign in to your LCM Dashboard account</p>
-        </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
+      {/* Left Side - Branding */}
+      <div className="login-left">
+        <div className="login-left-content">
+          <div className="login-logo">
+            <img src="/LCMLOGO.png" alt="LCM Logo" className="logo-image" />
+            <span className="logo-text">LCM</span>
           </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success">
-            <span>{success}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="login-form">
-          {/* Email */}
-          <div className="form-group">
-            <label htmlFor="email">
-              <FiMail className="input-icon" />
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter your email"
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="form-group">
-            <label htmlFor="password">
-              <FiLock className="input-icon" />
-              Password
-            </label>
-            <div className="password-input-wrapper">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter your password"
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
+          <h1 className="login-title">Welcome Back!</h1>
+          <p className="login-subtitle">
+            Sign in to access your marketing dashboard and manage all your campaigns in one place.
+          </p>
+          <div className="login-features">
+            <div className="feature-item">
+              <div className="feature-icon">📊</div>
+              <span>Meta Ads Management</span>
+            </div>
+            <div className="feature-item">
+              <div className="feature-icon">📞</div>
+              <span>IVR Call Marketing</span>
+            </div>
+            <div className="feature-item">
+              <div className="feature-icon">💬</div>
+              <span>Multi-Channel Support</span>
             </div>
           </div>
+        </div>
+        <div className="login-left-background">
+          <div className="bg-circle bg-circle-1"></div>
+          <div className="bg-circle bg-circle-2"></div>
+          <div className="bg-circle bg-circle-3"></div>
+        </div>
+      </div>
 
-          {/* Forgot Password Link */}
-          <div className="form-footer">
-            <Link to="/forgot-password" className="forgot-password-link">
-              Forgot Password?
-            </Link>
+      {/* Right Side - Login Form */}
+      <div className="login-right">
+        <div className="login-container">
+          <div className="login-header">
+            <h2>Sign In</h2>
+            <p>Enter your credentials to continue</p>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
+          {error && (
+            <div className="alert alert-error">
+              <svg className="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
-          {/* Sign Up Link */}
-          <div className="login-footer">
-            <p>
-              Don't have an account?{" "}
-              <Link to="/signup" className="signup-link">
-                Sign Up
+          {success && (
+            <div className="alert alert-success">
+              <svg className="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{success}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="login-form">
+            {/* Email */}
+            <div className="form-group">
+              <label htmlFor="email">
+                <FiMail className="input-icon" />
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                required
+                autoComplete="email"
+                className="form-input"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="form-group">
+              <label htmlFor="password">
+                <FiLock className="input-icon" />
+                Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                  className="form-input"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="form-footer">
+              <Link to="/forgot-password" className="forgot-password-link">
+                Forgot Password?
               </Link>
-            </p>
-          </div>
-        </form>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="login-button"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="button-spinner"></span>
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <FiArrowRight className="button-icon" />
+                </>
+              )}
+            </button>
+
+            {/* Sign Up Link */}
+            <div className="login-footer">
+              <p>
+                Don't have an account?{" "}
+                <Link to="/signup" className="signup-link">
+                  Sign Up Free
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
 };
 
 export default Login;
-

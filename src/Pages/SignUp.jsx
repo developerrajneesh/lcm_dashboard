@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiX, FiGift } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiX, FiGift, FiArrowRight, FiEye, FiEyeOff } from "react-icons/fi";
 import "./SignUp.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 const SignUp = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  // Note: Signup page should always be accessible
-  // If user is already logged in, they can still access signup (they might want to create another account)
-  // The redirect after successful signup will handle navigation
   
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +19,7 @@ const SignUp = () => {
     referralCode: "",
   });
   const [previewImage, setPreviewImage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -178,168 +176,244 @@ const SignUp = () => {
 
   return (
     <div className="signup-page">
-      <div className="signup-container">
-        <div className="signup-header">
-          <h1>Create Account</h1>
-          <p>Sign up to get started with LCM Dashboard</p>
-        </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
+      {/* Left Side - Branding */}
+      <div className="signup-left">
+        <div className="signup-left-content">
+          <div className="signup-logo">
+            <img src="/LCMLOGO.png" alt="LCM Logo" className="logo-image" />
+            <span className="logo-text">LCM</span>
           </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success">
-            <span>{success}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="signup-form">
-          {/* Profile Image Upload */}
-          <div className="form-group profile-image-group">
-            <label className="profile-image-label">
-              <div className="profile-image-upload">
-                {previewImage ? (
-                  <div className="profile-image-preview">
-                    <img src={previewImage} alt="Profile preview" />
-                    <button
-                      type="button"
-                      className="remove-image-btn"
-                      onClick={removeImage}
-                    >
-                      <FiX />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="profile-image-placeholder">
-                    <FiCamera className="camera-icon" />
-                    <span>Upload Profile Image</span>
-                    <span className="hint">(Optional)</span>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="profile-image-input"
-                />
+          <h1 className="signup-title">Join LCM Today!</h1>
+          <p className="signup-subtitle">
+            Create your account and start managing all your marketing campaigns from one powerful platform.
+          </p>
+          <div className="signup-benefits">
+            <div className="benefit-item">
+              <div className="benefit-icon">✨</div>
+              <div>
+                <h3>Free Trial</h3>
+                <p>14 days free, no credit card required</p>
               </div>
-            </label>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">🚀</div>
+              <div>
+                <h3>Quick Setup</h3>
+                <p>Get started in less than 5 minutes</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">💎</div>
+              <div>
+                <h3>All Features</h3>
+                <p>Access to all marketing channels</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="signup-left-background">
+          <div className="bg-circle bg-circle-1"></div>
+          <div className="bg-circle bg-circle-2"></div>
+          <div className="bg-circle bg-circle-3"></div>
+        </div>
+      </div>
+
+      {/* Right Side - Signup Form */}
+      <div className="signup-right">
+        <div className="signup-container">
+          <div className="signup-header">
+            <h2>Create Account</h2>
+            <p>Fill in your details to get started</p>
           </div>
 
-          {/* Name */}
-          <div className="form-group">
-            <label htmlFor="name">
-              <FiUser className="input-icon" />
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
+          {error && (
+            <div className="alert alert-error">
+              <svg className="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
-          {/* Email */}
-          <div className="form-group">
-            <label htmlFor="email">
-              <FiMail className="input-icon" />
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+          {success && (
+            <div className="alert alert-success">
+              <svg className="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{success}</span>
+            </div>
+          )}
 
-          {/* Phone Number */}
-          <div className="form-group">
-            <label htmlFor="phoneNumber">
-              <FiPhone className="input-icon" />
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-              placeholder="Enter your phone number (optional)"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="signup-form">
+            {/* Profile Image Upload */}
+            <div className="form-group profile-image-group">
+              <label className="profile-image-label">
+                <div className="profile-image-upload">
+                  {previewImage ? (
+                    <div className="profile-image-preview">
+                      <img src={previewImage} alt="Profile preview" />
+                      <button
+                        type="button"
+                        className="remove-image-btn"
+                        onClick={removeImage}
+                        aria-label="Remove image"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="profile-image-placeholder">
+                      <FiCamera className="camera-icon" />
+                      <span>Upload Photo</span>
+                      <span className="hint">(Optional)</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="profile-image-input"
+                  />
+                </div>
+              </label>
+            </div>
 
-          {/* Password */}
-          <div className="form-group">
-            <label htmlFor="password">
-              <FiLock className="input-icon" />
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Enter your password (min 8 characters)"
-              required
-              minLength={8}
-            />
-          </div>
+            {/* Name */}
+            <div className="form-group">
+              <label htmlFor="name">
+                <FiUser className="input-icon" />
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter your full name"
+                required
+                className="form-input"
+              />
+            </div>
 
-          {/* Referral Code */}
-          <div className="form-group">
-            <label htmlFor="referralCode">
-              <FiGift className="input-icon" />
-              Referral Code <span className="hint">(Optional)</span>
-            </label>
-            <input
-              type="text"
-              id="referralCode"
-              name="referralCode"
-              value={formData.referralCode}
-              onChange={handleInputChange}
-              placeholder="Enter referral code if you have one"
-              style={{ textTransform: "uppercase" }}
-            />
-            <small className="form-hint">
-              Enter a referral code to help someone earn ₹50
-            </small>
-          </div>
+            {/* Email */}
+            <div className="form-group">
+              <label htmlFor="email">
+                <FiMail className="input-icon" />
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                required
+                className="form-input"
+              />
+            </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="signup-button"
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
+            {/* Phone Number */}
+            <div className="form-group">
+              <label htmlFor="phoneNumber">
+                <FiPhone className="input-icon" />
+                Phone Number <span className="hint">(Optional)</span>
+              </label>
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+                placeholder="Enter your phone number"
+                className="form-input"
+              />
+            </div>
 
-          {/* Login Link */}
-          <div className="signup-footer">
-            <p>
-              Already have an account?{" "}
-              <Link to="/login" className="login-link">
-                Sign In
-              </Link>
-            </p>
-          </div>
-        </form>
+            {/* Password */}
+            <div className="form-group">
+              <label htmlFor="password">
+                <FiLock className="input-icon" />
+                Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password (min 8 characters)"
+                  required
+                  minLength={8}
+                  className="form-input"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            {/* Referral Code */}
+            <div className="form-group">
+              <label htmlFor="referralCode">
+                <FiGift className="input-icon" />
+                Referral Code <span className="hint">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                id="referralCode"
+                name="referralCode"
+                value={formData.referralCode}
+                onChange={handleInputChange}
+                placeholder="Enter referral code if you have one"
+                style={{ textTransform: "uppercase" }}
+                className="form-input"
+              />
+              <small className="form-hint">
+                Enter a referral code to help someone earn ₹50
+              </small>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="signup-button"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="button-spinner"></span>
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <FiArrowRight className="button-icon" />
+                </>
+              )}
+            </button>
+
+            {/* Login Link */}
+            <div className="signup-footer">
+              <p>
+                Already have an account?{" "}
+                <Link to="/login" className="login-link">
+                  Sign In
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
 };
 
 export default SignUp;
-

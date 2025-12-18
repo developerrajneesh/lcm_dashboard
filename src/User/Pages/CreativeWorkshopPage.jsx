@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { FiImage } from "react-icons/fi";
 import "./CreativeWorkshopPage.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 // Helper function to get image URL through proxy if it's an external URL
 const getImageUrl = (url) => {

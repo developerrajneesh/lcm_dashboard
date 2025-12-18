@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { FiSend, FiMessageCircle } from "react-icons/fi";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace("/api/v1", "") || "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
+const SOCKET_URL = BACKEND_URL;
 
 const ChatSupport = () => {
   const [socket, setSocket] = useState(null);

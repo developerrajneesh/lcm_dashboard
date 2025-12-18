@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiPhone, FiUser, FiMail, FiPhoneCall, FiBriefcase, FiMapPin, FiCheckCircle, FiClock, FiX } from "react-icons/fi";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 const IvrFormPage = () => {
   const navigate = useNavigate();

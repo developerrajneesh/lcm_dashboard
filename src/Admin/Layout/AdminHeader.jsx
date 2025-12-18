@@ -32,12 +32,14 @@ const AdminHeader = ({ toggleSidebar }) => {
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
-        <button
-          onClick={toggleSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
-        >
-          <FiMenu className="w-6 h-6 text-gray-700" />
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
+          >
+            <FiMenu className="w-6 h-6 text-gray-700" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-4 ml-auto">
           <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">

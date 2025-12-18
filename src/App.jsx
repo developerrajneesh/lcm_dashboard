@@ -29,6 +29,7 @@ import LandingPage from "./LandingPage";
 import SignUp from "./Pages/SignUp";
 import Login from "./Pages/Login";
 import NotFound from "./NotFound";
+import OAuthCallback from "./Pages/OAuthCallback";
 
 export default function App() {
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/facebook-callback" element={<OAuthCallback />} />
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/user/*" element={<UserRoutes />} />
         <Route path="*" element={<NotFound />} />

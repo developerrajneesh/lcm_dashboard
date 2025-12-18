@@ -233,7 +233,7 @@ const CreativeUpload = () => {
     console.log("Template saved:", template);
 
     axios
-      .post("https://api.leadscraftmarketing.com/api/v1/template", template)
+      .post(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/v1/template`, template)
       .then((response) => {
         console.log("Template saved successfully:", response.data);
         alert("Template saved successfully!");

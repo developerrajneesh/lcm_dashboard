@@ -7,7 +7,7 @@ const SubscriptionPage = () => {
       id: 1,
       name: "BASIC PLAN",
       regularPrice: "₹999",
-      earlyBirdPrice: "₹79",
+      earlyBirdPrice: "₹999",
       period: "month",
       features: [
         "Unlimited Creatives",
