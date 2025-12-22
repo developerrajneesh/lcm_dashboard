@@ -112,6 +112,8 @@ const ConnectMetaAccount = ({ onSuccess }) => {
                       } else {
                         // Multiple accounts - let user choose
                         console.log(`✅ Multiple accounts found (${accounts.length}), will show selection modal`);
+                        console.log("📋 Accounts being passed to onSuccess:", accounts);
+                        // Ensure we pass the filtered accounts
                         onSuccess(accessToken, null, accounts);
                       }
                     } else {
@@ -156,7 +158,7 @@ const ConnectMetaAccount = ({ onSuccess }) => {
         }
       },
       {
-        scope: "public_profile,email,ads_management,ads_read,business_management",
+        scope: "public_profile,email,ads_management,pages_read_engagement,ads_read,business_management,pages_manage_cta,pages_manage_instant_articles,pages_show_list,page_events,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_engagement,pages_manage_posts,pages_messaging_phone_number,pages_messaging,pages_messaging_subscriptions,pages_read_engagement,pages_utility_messaging,read_page_mailboxes",
       }
     );
   };

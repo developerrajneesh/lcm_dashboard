@@ -65,6 +65,7 @@ export const adsetAPI = {
   pause: (adsetId) => api.post(`/adsets/${adsetId}/pause`),
   activate: (adsetId) => api.post(`/adsets/${adsetId}/activate`),
   delete: (adsetId) => api.delete(`/adsets/${adsetId}`),
+  getTargetingSearch: (params) => api.get("/adsets/targeting-search", { params }),
 };
 
 // Ad API
@@ -77,6 +78,17 @@ export const adAPI = {
   pause: (adId) => api.post(`/ads/${adId}/pause`),
   activate: (adId) => api.post(`/ads/${adId}/activate`),
   delete: (adId) => api.delete(`/ads/${adId}`),
+  getPages: () => api.get("/ads/pages"),
+  uploadImage: (data) => api.post("/ads/upload-image", data),
+  getRedirectPageUrl: (imageUrl, redirectUrl, title, description) => {
+    const params = new URLSearchParams({
+      imageUrl,
+      ...(redirectUrl && { redirectUrl }),
+      ...(title && { title }),
+      ...(description && { description }),
+    });
+    return `${api.defaults.baseURL}/ads/redirect-page?${params.toString()}`;
+  },
 };
 
 export default api;

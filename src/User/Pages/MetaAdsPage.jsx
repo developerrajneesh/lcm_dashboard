@@ -24,6 +24,14 @@ const MetaAdsPage = () => {
     checkConnection();
   }, []);
 
+  // Show modal when accounts are available and no account is selected
+  useEffect(() => {
+    if (isConnected && adAccounts && adAccounts.length > 1 && !adAccountId && !showAccountModal) {
+      console.log("🔔 useEffect: Multiple accounts available, showing modal");
+      setShowAccountModal(true);
+    }
+  }, [isConnected, adAccounts, adAccountId, showAccountModal]);
+
   const checkConnection = async () => {
     try {
       const token = localStorage.getItem("fb_access_token");
@@ -80,7 +88,12 @@ const MetaAdsPage = () => {
   };
 
   const handleConnectSuccess = async (token, accountId, accounts = []) => {
-    console.log("🔗 handleConnectSuccess called:", { token: token ? "PRESENT" : "MISSING", accountId, accountsCount: accounts?.length });
+    console.log("🔗 handleConnectSuccess called:", { 
+      token: token ? "PRESENT" : "MISSING", 
+      accountId, 
+      accountsCount: accounts?.length,
+      accounts: accounts 
+    });
     
     if (token) {
       setAccessToken(token);
@@ -92,28 +105,50 @@ const MetaAdsPage = () => {
         setAdAccountId(accountId);
         localStorage.setItem("fb_ad_account_id", accountId);
         setIsConnected(true);
-      } else if (accounts && accounts.length > 0) {
+        setShowAccountModal(false); // Ensure modal is closed for single account
+      } else if (accounts && Array.isArray(accounts) && accounts.length > 0) {
         // Accounts array provided
-        console.log(`✅ ${accounts.length} accounts found`);
-        setAdAccounts(accounts);
+        console.log(`✅ ${accounts.length} accounts found:`, accounts);
         
-        if (accounts.length === 1) {
+        // Filter out invalid accounts
+        const validAccounts = accounts.filter(account => account && account.id);
+        console.log(`✅ Valid accounts after filtering: ${validAccounts.length}`);
+        
+        if (validAccounts.length === 0) {
+          console.warn("⚠️ No valid accounts after filtering");
+          setAdAccounts([]);
+          setIsConnected(true);
+          setShowAccountModal(false);
+        } else if (validAccounts.length === 1) {
           // Only one account - auto-select it
-          const singleAccountId = accounts[0].id;
+          const singleAccountId = validAccounts[0].id;
           console.log("✅ Auto-selecting single account:", singleAccountId);
           setAdAccountId(singleAccountId);
           localStorage.setItem("fb_ad_account_id", singleAccountId);
           setIsConnected(true);
+          setShowAccountModal(false);
         } else {
           // Multiple accounts - show selection modal
-          console.log("✅ Showing account selection modal for", accounts.length, "accounts");
+          console.log("✅ Multiple accounts found, setting up modal:", validAccounts.length);
+          console.log("📋 Valid accounts:", validAccounts);
+          
+          // Set accounts first
+          setAdAccounts(validAccounts);
+          
+          // Set modal to show BEFORE setting isConnected
+          // This ensures modal shows even during the transition
           setShowAccountModal(true);
-          // IMPORTANT: Set isConnected to true so the main dashboard shows (modal will overlay)
+          
+          // Then set isConnected to show the dashboard (modal will overlay on top)
           setIsConnected(true);
+          
+          console.log("✅ Modal should now be visible");
         }
       } else {
         // No accounts provided - try to fetch them
         console.log("⚠️ No accounts provided, fetching from API...");
+        setAdAccounts([]);
+        setIsConnected(true);
         await fetchAdAccounts(token);
       }
     } else {
@@ -122,6 +157,7 @@ const MetaAdsPage = () => {
   };
 
   const handleAccountSelect = (accountId) => {
+    console.log("✅ Account selected:", accountId);
     setAdAccountId(accountId);
     localStorage.setItem("fb_ad_account_id", accountId);
     setShowAccountModal(false);
@@ -289,37 +325,72 @@ const MetaAdsPage = () => {
 
       {/* Account Selection Modal */}
       {showAccountModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" 
+          style={{ zIndex: 9999 }}
+          onClick={(e) => {
+            // Prevent closing if no account is selected and there are multiple accounts
+            if (e.target === e.currentTarget && adAccounts && adAccounts.length > 1 && !adAccountId) {
+              console.log("⚠️ Cannot close modal - account selection required");
+              return;
+            }
+            // Close modal when clicking outside (only if account is selected)
+            if (e.target === e.currentTarget && adAccountId) {
+              setShowAccountModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Select Ad Account</h2>
               <button
-                onClick={() => setShowAccountModal(false)}
+                onClick={() => {
+                  // Only allow closing if account is selected
+                  if (adAccountId || (adAccounts && adAccounts.length <= 1)) {
+                    setShowAccountModal(false);
+                  } else {
+                    console.log("⚠️ Please select an account first");
+                    alert("Please select an ad account to continue.");
+                  }
+                }}
                 className="p-1 rounded-lg hover:bg-gray-100"
               >
                 <FiX className="w-5 h-5 text-gray-600" />
               </button>
             </div>
-            <div className="p-6 max-h-96 overflow-y-auto">
-              {adAccounts
-                .filter(account => account && account.id) // Filter out empty/invalid accounts
-                .map((account) => (
-                  <button
-                    key={account.id}
-                    onClick={() => handleAccountSelect(account.id)}
-                    className="w-full text-left p-4 rounded-lg hover:bg-gray-50 border border-gray-200 mb-2 transition-colors"
-                  >
-                    <p className="font-medium text-gray-900">
-                      {account.name || account.id || "Unnamed Account"}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">ID: {account.id}</p>
-                    {account.currency && (
-                      <p className="text-xs text-gray-400 mt-1">Currency: {account.currency}</p>
-                    )}
-                  </button>
-                ))}
-              {adAccounts.filter(account => account && account.id).length === 0 && (
-                <p className="text-center text-gray-500 py-4">No valid ad accounts found</p>
+            <div 
+              className="p-6 max-h-96 overflow-y-auto account-list-scroll"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e1 #f1f5f9'
+              }}
+            >
+              {adAccounts && adAccounts.length > 0 ? (
+                adAccounts
+                  .filter(account => account && account.id) // Filter out empty/invalid accounts
+                  .map((account) => (
+                    <button
+                      key={account.id}
+                      onClick={() => handleAccountSelect(account.id)}
+                      className="w-full text-left p-4 rounded-lg hover:bg-gray-50 border border-gray-200 mb-2 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900">
+                        {account.name || account.id || "Unnamed Account"}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">ID: {account.id}</p>
+                      {account.currency && (
+                        <p className="text-xs text-gray-400 mt-1">Currency: {account.currency}</p>
+                      )}
+                      {account.account_status && (
+                        <p className="text-xs text-gray-400 mt-1">Status: {account.account_status}</p>
+                      )}
+                    </button>
+                  ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-2">No ad accounts found</p>
+                  <p className="text-sm text-gray-400">Please make sure your Facebook account has ad accounts set up.</p>
+                </div>
               )}
             </div>
           </div>

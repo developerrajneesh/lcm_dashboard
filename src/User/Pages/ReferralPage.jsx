@@ -22,17 +22,68 @@ const ReferralPage = () => {
     }
   }, [user]);
 
-  const loadUserData = () => {
+  const loadUserData = async () => {
     try {
       const userData = localStorage.getItem("user");
       if (userData) {
         const parsedUser = JSON.parse(userData);
+        console.log("Loaded user data:", parsedUser);
         setUser(parsedUser);
+        
+        // Check if user has a referral code, if not, assign one
+        const userId = parsedUser.id || parsedUser._id;
+        const hasReferralCode = parsedUser.referralCode && 
+                                parsedUser.referralCode !== "N/A" && 
+                                parsedUser.referralCode.trim() !== "";
+        
+        console.log("User ID:", userId, "Has referral code:", hasReferralCode, "Referral code:", parsedUser.referralCode);
+        
+        if (!hasReferralCode && userId) {
+          console.log("Assigning referral code for user:", userId);
+          await assignReferralCode(userId);
+        }
       }
     } catch (error) {
       console.error("Error loading user data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const assignReferralCode = async (userId) => {
+    try {
+      console.log("Assigning referral code for user:", userId);
+      const response = await fetch(`${API_BASE_URL}/user/assign-referral-code/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("API Error:", response.status, errorData);
+        return;
+      }
+
+      const result = await response.json();
+      console.log("Referral code assignment result:", result);
+
+      if (result.success && result.user) {
+        // Update user in localStorage and state
+        const currentUserData = localStorage.getItem("user");
+        if (currentUserData) {
+          const currentUser = JSON.parse(currentUserData);
+          const updatedUser = { ...currentUser, referralCode: result.user.referralCode };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          setUser(updatedUser);
+          console.log("Referral code assigned:", result.user.referralCode);
+        }
+      } else {
+        console.error("Failed to assign referral code:", result);
+      }
+    } catch (error) {
+      console.error("Error assigning referral code:", error);
     }
   };
 
