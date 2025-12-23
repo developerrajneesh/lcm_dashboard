@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiUpload, FiX, FiCheck, FiArrowRight } from "react-icons/fi";
 import { GetCountries, GetState, GetCity } from "react-country-state-city";
 import { campaignAPI, adsetAPI, adAPI } from "../../utils/api";
+import PlacesAutocomplete from "../PlacesAutocomplete";
 
 const MetaAdsCreate = ({ accessToken, adAccountId, onCampaignCreated, preselectedCampaignId, preselectedCampaignName, preselectedAdSetId, preselectedAdSetName }) => {
   // Start at step 3 if AdSet is preselected, step 2 if campaign is preselected, otherwise step 1
@@ -67,6 +68,140 @@ const MetaAdsCreate = ({ accessToken, adAccountId, onCampaignCreated, preselecte
     mediaUrl: null,
   });
   const [ogImageTag, setOgImageTag] = useState(""); // Store Open Graph tag for display
+  const [selectedPlace, setSelectedPlace] = useState(null); // Store selected place from Google Places
+  const [metaRegionKey, setMetaRegionKey] = useState(null); // Store Meta region key for selected place
+  const [searchingMetaRegion, setSearchingMetaRegion] = useState(false); // Loading state for Meta region search
+
+  // Handle place selection from Google Places
+  const handlePlaceSelect = async (placeInfo) => {
+    if (placeInfo) {
+      setSelectedPlace(placeInfo);
+      setMetaRegionKey(null); // Reset region key
+      console.log("📍 Place selected:", placeInfo);
+      
+      // Search for Meta region/city key based on place
+      if (placeInfo.name || placeInfo.address) {
+        setSearchingMetaRegion(true);
+        try {
+          // Extract city/region name from address or use place name
+          // Try to extract from address first (e.g., "Noida, Uttar Pradesh, India" -> "Noida")
+          let searchQuery = placeInfo.name;
+          if (placeInfo.address) {
+            // Split address by comma and take first part (usually city/region name)
+            const addressParts = placeInfo.address.split(",");
+            if (addressParts.length > 0) {
+              searchQuery = addressParts[0].trim();
+            }
+          }
+          
+          // Always search for both region and city to get the most accurate results
+          // Meta API can return both, and we'll use the most relevant one
+          let locationTypes = ['region', 'city']; // Always search both
+          
+          console.log("📍 Place types from Google:", placeInfo.types);
+          
+          console.log("🔍 Searching Meta geolocation for:", searchQuery);
+          console.log("📍 Location types (auto-detected):", locationTypes);
+          console.log("📍 Coordinates:", placeInfo.location);
+          
+          // Build search parameters
+          const searchParams = {
+            q: searchQuery,
+            location_types: locationTypes.join(','), // Pass as comma-separated string: "region,city"
+          };
+          
+          // Add coordinates if available
+          if (placeInfo.location && placeInfo.location.lat && placeInfo.location.lng) {
+            searchParams.latitude = placeInfo.location.lat.toString();
+            searchParams.longitude = placeInfo.location.lng.toString();
+            searchParams.distance = "10000"; // 10km radius in meters
+          }
+          
+          console.log("📤 Calling Meta geolocation API with params:", searchParams);
+          
+          const response = await adsetAPI.searchAdGeolocation(searchParams);
+          
+          console.log("📥 Meta geolocation API response:", response.data);
+          
+          if (response.data.success && response.data.results && response.data.results.length > 0) {
+            // Meta returns results, we need to find the best match
+            // Priority: city > region (city is more specific)
+            let bestResult = null;
+            
+            console.log("📊 All Meta results:", response.data.results);
+            
+            // First, try to find a city result
+            // Meta API might use different field names: type, location_class, class, or primary_type
+            const cityResult = response.data.results.find(r => {
+              const type = String(r.type || r.location_class || r.class || r.primary_type || '').toLowerCase();
+              const name = String(r.name || '').toLowerCase();
+              // Check if it's a city by type or by name pattern (cities often have specific naming)
+              return type === 'city' || 
+                     type.includes('city') || 
+                     (type === 'locality' && !type.includes('region')) ||
+                     (name && !name.includes('state') && !name.includes('province') && !name.includes('region'));
+            });
+            
+            // If no city found, try region
+            const regionResult = response.data.results.find(r => {
+              const type = String(r.type || r.location_class || r.class || r.primary_type || '').toLowerCase();
+              return type === 'region' || 
+                     type.includes('region') || 
+                     type.includes('administrative_area') ||
+                     type === 'state' ||
+                     type === 'province';
+            });
+            
+            // Use city if available, otherwise use region, otherwise first result
+            bestResult = cityResult || regionResult || response.data.results[0];
+            
+            const geoKey = bestResult.key || bestResult.id;
+            const geoName = bestResult.name;
+            const geoType = bestResult.type || bestResult.location_class || bestResult.class || 'unknown';
+            
+            console.log("✅ Found Meta geolocation:", { 
+              key: geoKey, 
+              name: geoName, 
+              type: geoType,
+              isCity: !!cityResult,
+              isRegion: !!regionResult,
+              allResults: response.data.results,
+              selectedResult: bestResult 
+            });
+            
+            setMetaRegionKey({ 
+              key: geoKey, 
+              name: geoName, 
+              type: geoType,
+              fullResult: bestResult 
+            });
+          } else {
+            console.log("ℹ️ No Meta geolocation found for:", searchQuery);
+            console.log("📊 Response data:", response.data);
+            setMetaRegionKey(null);
+          }
+        } catch (error) {
+          console.error("❌ Error searching Meta geolocation:", error);
+          console.error("❌ Error response:", error.response?.data);
+          console.error("❌ Error message:", error.message);
+          
+          // Show user-friendly error
+          if (error.response?.data?.error) {
+            const fbError = error.response.data.error;
+            console.error("❌ Meta API Error:", fbError.message || fbError.error_user_msg);
+          }
+          
+          setMetaRegionKey(null);
+        } finally {
+          setSearchingMetaRegion(false);
+        }
+      }
+    } else {
+      // Place was cleared
+      setSelectedPlace(null);
+      setMetaRegionKey(null);
+    }
+  };
 
   const objectives = [
     { id: "OUTCOME_TRAFFIC", name: "Website Traffic", icon: "🌐" },
@@ -204,20 +339,57 @@ const MetaAdsCreate = ({ accessToken, adAccountId, onCampaignCreated, preselecte
 
   // Load Facebook pages
   const loadPages = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.warn("⚠️ No access token available for loading pages");
+      return;
+    }
     
     setLoadingPages(true);
     try {
+      console.log("📥 Loading Facebook pages...");
       const response = await adAPI.getPages();
-      if (response.data.success && response.data.pages?.data) {
-        setPages(response.data.pages.data);
-        // Auto-select first page if available
-        if (response.data.pages.data.length > 0 && !pageId) {
-          setPageId(response.data.pages.data[0].id);
+      console.log("📤 Pages API response:", response.data);
+      
+      if (response.data.success) {
+        // Handle different response structures
+        let pagesData = [];
+        
+        if (response.data.pages?.data) {
+          // Standard structure: { success: true, pages: { data: [...] } }
+          pagesData = response.data.pages.data;
+        } else if (Array.isArray(response.data.pages)) {
+          // Direct array: { success: true, pages: [...] }
+          pagesData = response.data.pages;
+        } else if (response.data.pages && typeof response.data.pages === 'object') {
+          // Try to extract data from nested structure
+          pagesData = response.data.pages.data || Object.values(response.data.pages).flat() || [];
         }
+        
+        console.log(`✅ Loaded ${pagesData.length} pages:`, pagesData);
+        
+        if (pagesData.length > 0) {
+          setPages(pagesData);
+          // Auto-select first page if available
+          if (!pageId) {
+            setPageId(pagesData[0].id);
+            console.log("✅ Auto-selected first page:", pagesData[0].id, pagesData[0].name);
+          }
+        } else {
+          console.warn("⚠️ No pages found. Make sure you have pages associated with your Facebook account.");
+          setPages([]);
+        }
+      } else {
+        console.error("❌ Pages API returned success: false", response.data);
+        if (response.data.error) {
+          alert(`Error loading pages: ${response.data.error}`);
+        }
+        setPages([]);
       }
     } catch (error) {
-      console.error("Error loading pages:", error);
+      console.error("❌ Error loading pages:", error);
+      const errorMessage = error.response?.data?.error || error.message || "Failed to load pages";
+      alert(`Error loading Facebook pages: ${errorMessage}\n\nMake sure:\n1. You have pages associated with your Facebook account\n2. Your access token has the 'pages_read_engagement' permission`);
+      setPages([]);
     } finally {
       setLoadingPages(false);
     }
@@ -1279,6 +1451,115 @@ const MetaAdsCreate = ({ accessToken, adAccountId, onCampaignCreated, preselecte
               {/* Targeting Section */}
               <div className="border-t pt-6">
                 <h4 className="text-md font-semibold text-gray-900 mb-4">Targeting</h4>
+                
+                {/* Google Places Autocomplete - Location Search */}
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Location (Optional)
+                  </label>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Search for a place to view its details. You can still manually select country/state/city below.
+                  </p>
+                  <PlacesAutocomplete
+                    value=""
+                    onChange={() => {}}
+                    onPlaceSelect={handlePlaceSelect}
+                    showPlaceDetails={false}
+                    placeholder="Search for a place (e.g., restaurant, store, business)"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  />
+                </div>
+                
+                {/* Display Selected Place Details */}
+                {selectedPlace && (
+                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <h5 className="font-semibold text-gray-900 text-sm">
+                        Selected Place:
+                      </h5>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlace(null);
+                          setMetaRegionKey(null);
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-700">
+                      {selectedPlace.name && (
+                        <div><strong>Name:</strong> {selectedPlace.name}</div>
+                      )}
+                      {selectedPlace.address && (
+                        <div><strong>Address:</strong> {selectedPlace.address}</div>
+                      )}
+                      {selectedPlace.phone && (
+                        <div><strong>Phone:</strong> {selectedPlace.phone}</div>
+                      )}
+                      {selectedPlace.website && (
+                        <div>
+                          <strong>Website:</strong>{" "}
+                          <a
+                            href={selectedPlace.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            {selectedPlace.website}
+                          </a>
+                        </div>
+                      )}
+                      {selectedPlace.rating && (
+                        <div>
+                          <strong>Rating:</strong> ⭐ {selectedPlace.rating.toFixed(1)}
+                          {selectedPlace.totalRatings > 0 && (
+                            <span className="text-gray-500">
+                              {" "}({selectedPlace.totalRatings} reviews)
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {selectedPlace.location && (
+                        <div className="text-xs text-gray-500">
+                          <strong>Coordinates:</strong> {selectedPlace.location.lat.toFixed(6)}, {selectedPlace.location.lng.toFixed(6)}
+                        </div>
+                      )}
+                      
+                      {/* Meta Region/City Key */}
+                      <div className="mt-3 pt-3 border-t border-green-200">
+                        {searchingMetaRegion ? (
+                          <div className="text-xs text-gray-600">
+                            🔍 Searching for Meta geolocation key...
+                          </div>
+                        ) : metaRegionKey ? (
+                          <div className="bg-white p-2 rounded border border-green-300">
+                            <div className="text-xs font-semibold text-green-700 mb-1">
+                              ✅ Meta {metaRegionKey.type === 'city' ? 'City' : 'Region'} Key Found:
+                            </div>
+                            <div className="text-sm text-gray-800">
+                              <strong>Name:</strong> {metaRegionKey.name}
+                            </div>
+                            <div className="text-sm text-gray-800">
+                              <strong>Type:</strong> <span className="text-blue-600 capitalize">{metaRegionKey.type || 'region'}</span>
+                            </div>
+                            <div className="text-sm text-gray-800 font-mono mt-1">
+                              <strong>Key:</strong> <span className="text-blue-600 font-bold">{metaRegionKey.key}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              💡 This {metaRegionKey.type === 'city' ? 'city' : 'region'} key can be used in your ad targeting
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            ℹ️ No Meta geolocation key found for this location
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Country */}
                 <div className="mb-4">

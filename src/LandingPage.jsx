@@ -893,12 +893,28 @@ const LandingPage = () => {
                   </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/terms-of-service"
                     className="text-gray-400 hover:text-white transition"
                   >
                     Terms of Service
-                  </a>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/shipping-policy"
+                    className="text-gray-400 hover:text-white transition"
+                  >
+                    Shipping Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/cancellations-and-refunds"
+                    className="text-gray-400 hover:text-white transition"
+                  >
+                    Cancellations and Refunds
+                  </Link>
                 </li>
               </ul>
             </div>

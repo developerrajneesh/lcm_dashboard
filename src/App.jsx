@@ -31,6 +31,9 @@ import Login from "./Pages/Login";
 import NotFound from "./NotFound";
 import OAuthCallback from "./Pages/OAuthCallback";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import ShippingPolicy from "./Pages/ShippingPolicy";
+import TermsAndConditions from "./Pages/TermsAndConditions";
+import CancellationsAndRefunds from "./Pages/CancellationsAndRefunds";
 
 export default function App() {
   useEffect(() => {
@@ -64,6 +67,9 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/facebook-callback" element={<OAuthCallback />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
+        <Route path="/terms-of-service" element={<TermsAndConditions />} />
+        <Route path="/cancellations-and-refunds" element={<CancellationsAndRefunds />} />
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/user/*" element={<UserRoutes />} />
         <Route path="*" element={<NotFound />} />

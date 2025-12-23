@@ -367,12 +367,18 @@ const PrivacyPolicy = () => {
             <p className="text-gray-600 text-sm">
               © {new Date().getFullYear()} LCM. All rights reserved.
             </p>
-            <div className="flex gap-4 mt-4 md:mt-0">
+            <div className="flex gap-4 mt-4 md:mt-0 flex-wrap justify-center">
               <Link to="/privacy-policy" className="text-gray-600 hover:text-blue-600 text-sm">
                 Privacy Policy
               </Link>
               <Link to="/terms-of-service" className="text-gray-600 hover:text-blue-600 text-sm">
                 Terms of Service
+              </Link>
+              <Link to="/shipping-policy" className="text-gray-600 hover:text-blue-600 text-sm">
+                Shipping Policy
+              </Link>
+              <Link to="/cancellations-and-refunds" className="text-gray-600 hover:text-blue-600 text-sm">
+                Cancellations & Refunds
               </Link>
             </div>
           </div>

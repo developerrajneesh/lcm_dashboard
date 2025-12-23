@@ -66,6 +66,7 @@ export const adsetAPI = {
   activate: (adsetId) => api.post(`/adsets/${adsetId}/activate`),
   delete: (adsetId) => api.delete(`/adsets/${adsetId}`),
   getTargetingSearch: (params) => api.get("/adsets/targeting-search", { params }),
+  searchAdGeolocation: (params) => api.get("/adsets/search-geolocation", { params }),
 };
 
 // Ad API
