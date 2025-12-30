@@ -34,6 +34,27 @@ const CreativeWorkshopDetail = () => {
   const [imageDimensions, setImageDimensions] = useState({});
   const [imagesLoaded, setImagesLoaded] = useState({});
   const imageRefs = useRef({});
+  const [userData, setUserData] = useState({ username: "User", usernumber: "", userLogo: null });
+
+  useEffect(() => {
+    // Load user data for placeholders
+    const loadUserData = () => {
+      try {
+        const userDataStr = localStorage.getItem("user");
+        if (userDataStr) {
+          const user = JSON.parse(userDataStr);
+          setUserData({
+            username: user.name || "User",
+            usernumber: user.phoneNumber || "",
+            userLogo: user.profileImage || null,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -205,7 +226,46 @@ const CreativeWorkshopDetail = () => {
 
       // Draw text overlays
       if (imageData.texts && imageData.texts.length > 0) {
+        // Load user logo image if needed
+        let userLogoImg = null;
+        const hasUserLogo = imageData.texts.some(t => t.text && t.text.includes("{{userLogo}}"));
+        if (hasUserLogo && userData.userLogo) {
+          userLogoImg = new Image();
+          userLogoImg.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            userLogoImg.onload = resolve;
+            userLogoImg.onerror = reject;
+            userLogoImg.src = userData.userLogo;
+          });
+        }
+
         imageData.texts.forEach((text) => {
+          // Replace placeholders in text
+          let displayText = text.text || "";
+          displayText = displayText.replace(/\{\{username\}\}/g, userData.username);
+          displayText = displayText.replace(/\{\{usernumber\}\}/g, userData.usernumber);
+          
+          // Handle {{userLogo}} - draw image instead of text
+          if (displayText.trim() === "{{userLogo}}" && userLogoImg) {
+            const logoSize = (text.fontSize || 24) * 2;
+            const x = text.x * canvasWidth;
+            const y = text.y * canvasHeight;
+            
+            // Draw user logo as circular image
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x + logoSize / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(userLogoImg, x, y, logoSize, logoSize);
+            ctx.restore();
+            return; // Skip text rendering for logo
+          }
+          
+          // Remove {{userLogo}} from text if mixed
+          displayText = displayText.replace(/\{\{userLogo\}\}/g, "");
+          
+          if (!displayText) return; // Skip if no text to display
+
           const x = text.x * canvasWidth;
           const y = text.y * canvasHeight;
           const fontSize = text.fontSize || 24;
@@ -217,8 +277,8 @@ const CreativeWorkshopDetail = () => {
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
 
-          // Measure text
-          const metrics = ctx.measureText(text.text);
+          // Measure text with replaced content
+          const metrics = ctx.measureText(displayText);
           const textWidth = metrics.width;
           const textHeight = fontSize;
           const padding = 4;
@@ -248,36 +308,11 @@ const CreativeWorkshopDetail = () => {
             }
           }
 
-          // Draw border if needed
-          const borderWidth = text.borderWidth || 0;
-          if (borderWidth > 0) {
-            ctx.strokeStyle = text.borderColor || "#000000";
-            ctx.lineWidth = borderWidth;
-            const borderRadius = text.borderRadius || 0;
-            
-            if (borderRadius > 0) {
-              ctx.beginPath();
-              ctx.roundRect(
-                x - padding,
-                y - padding,
-                textWidth + padding * 2,
-                textHeight + padding * 2,
-                borderRadius
-              );
-              ctx.stroke();
-            } else {
-              ctx.strokeRect(
-                x - padding,
-                y - padding,
-                textWidth + padding * 2,
-                textHeight + padding * 2
-              );
-            }
-          }
+          // BORDER FEATURE COMPLETELY REMOVED - No borders will be drawn on canvas
 
-          // Draw text
+          // Draw text with replaced placeholders
           ctx.fillStyle = text.color || "#000000";
-          ctx.fillText(text.text, x, y);
+          ctx.fillText(displayText, x, y);
         });
         console.log("Text overlays drawn");
       }
@@ -456,41 +491,63 @@ const CreativeWorkshopDetail = () => {
                         const absoluteX = text.x * containerWidth;
                         const absoluteY = text.y * containerHeight;
 
-                        // Parse borderWidth
-                        const borderWidth = text.borderWidth !== undefined && text.borderWidth !== null
-                          ? (typeof text.borderWidth === "number" ? text.borderWidth : parseInt(text.borderWidth) || 0)
-                          : 0;
-                        const hasBorder = borderWidth > 0;
+                        // BORDER FEATURE COMPLETELY REMOVED - No border properties will be added
+
+                        // Replace placeholders in text
+                        let displayText = text.text || "";
+                        displayText = displayText.replace(/\{\{username\}\}/g, userData.username);
+                        displayText = displayText.replace(/\{\{usernumber\}\}/g, userData.usernumber);
+                        
+                        // Handle {{userLogo}} - render image instead of text
+                        if (displayText.trim() === "{{userLogo}}" || (displayText.trim() === "" && text.text?.trim() === "{{userLogo}}")) {
+                          if (userData.userLogo) {
+                            return (
+                              <img
+                                key={textIndex}
+                                src={userData.userLogo}
+                                alt="User Logo"
+                                style={{
+                                  position: "absolute",
+                                  left: `${absoluteX}px`,
+                                  top: `${absoluteY}px`,
+                                  width: `${scaledFontSize * 2}px`,
+                                  height: `${scaledFontSize * 2}px`,
+                                  borderRadius: `${text.borderRadius || scaledFontSize}px`,
+                                  objectFit: "cover",
+                                }}
+                              />
+                            );
+                          } else {
+                            return null;
+                          }
+                        }
+                        
+                        // Remove {{userLogo}} from text if mixed
+                        displayText = displayText.replace(/\{\{userLogo\}\}/g, "");
+
+                        // Build style object - NO border properties
+                        const textStyle = {
+                          position: "absolute",
+                          left: `${absoluteX}px`,
+                          top: `${absoluteY}px`,
+                          fontSize: `${scaledFontSize}px`,
+                          fontFamily: text.fontFamily || "sans-serif",
+                          color: text.color || "#000000",
+                          backgroundColor: text.bgColor || "transparent",
+                          fontWeight: text.bold ? "bold" : "normal",
+                          fontStyle: text.italic ? "italic" : "normal",
+                          padding: "4px 8px",
+                          borderRadius: `${text.borderRadius || 0}px`,
+                          // NO border properties - borders are completely disabled
+                        };
 
                         return (
                           <div
                             key={textIndex}
                             className="text-overlay-web"
-                            style={{
-                              position: "absolute",
-                              left: `${absoluteX}px`,
-                              top: `${absoluteY}px`,
-                              fontSize: `${scaledFontSize}px`,
-                              fontFamily: text.fontFamily || "sans-serif",
-                              color: text.color || "#000000",
-                              backgroundColor: text.bgColor || "transparent",
-                              fontWeight: text.bold ? "bold" : "normal",
-                              fontStyle: text.italic ? "italic" : "normal",
-                              padding: "4px 8px",
-                              borderRadius: `${text.borderRadius || 0}px`,
-                              ...(hasBorder
-                                ? {
-                                    borderWidth: `${borderWidth}px`,
-                                    borderColor: text.borderColor || "#000000",
-                                    borderStyle: "solid",
-                                  }
-                                : {
-                                    borderWidth: "0px",
-                                    borderStyle: "none",
-                                  }),
-                            }}
+                            style={textStyle}
                           >
-                            {text.text}
+                            {displayText}
                           </div>
                         );
                       })}

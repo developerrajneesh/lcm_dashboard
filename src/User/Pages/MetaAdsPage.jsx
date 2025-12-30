@@ -22,6 +22,32 @@ const MetaAdsPage = () => {
 
   useEffect(() => {
     checkConnection();
+    
+    // Listen for token expiration events
+    const handleTokenExpired = (event) => {
+      console.warn("⚠️ Token expired event received:", event.detail);
+      // Clear all Facebook-related data
+      localStorage.removeItem("fb_access_token");
+      localStorage.removeItem("fb_ad_account_id");
+      
+      // Reset all state
+      setAccessToken("");
+      setAdAccountId("");
+      setAdAccounts([]);
+      setIsConnected(false);
+      setShowAccountModal(false);
+      setPreselectedCampaignId(null);
+      setPreselectedCampaignName(null);
+      
+      // Show notification
+      alert(event.detail?.message || "Facebook access token has expired. Please reconnect your account.");
+    };
+    
+    window.addEventListener("metaTokenExpired", handleTokenExpired);
+    
+    return () => {
+      window.removeEventListener("metaTokenExpired", handleTokenExpired);
+    };
   }, []);
 
   // Show modal when accounts are available and no account is selected

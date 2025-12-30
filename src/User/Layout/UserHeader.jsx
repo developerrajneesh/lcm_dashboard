@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMenu, FiBell, FiUser, FiLogOut } from "react-icons/fi";
+import { FiMenu, FiUser, FiLogOut } from "react-icons/fi";
+import NotificationDropdown from "../../Components/NotificationDropdown";
 
 const UserHeader = ({ toggleSidebar }) => {
   const navigate = useNavigate();
@@ -42,10 +43,12 @@ const UserHeader = ({ toggleSidebar }) => {
         </div>
 
         <div className="flex items-center gap-4 ml-auto">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
-            <FiBell className="w-5 h-5 text-gray-700" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          {user && (
+            <NotificationDropdown
+              userId={user.id || user._id}
+              userRole="user"
+            />
+          )}
           
           <div className="relative">
             <div

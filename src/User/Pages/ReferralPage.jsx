@@ -18,9 +18,14 @@ const ReferralPage = () => {
   useEffect(() => {
     if (user) {
       fetchReferrals();
-      fetchTotalEarnings();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (referrals.length > 0) {
+      fetchTotalEarnings();
+    }
+  }, [referrals]);
 
   const loadUserData = async () => {
     try {
@@ -161,7 +166,7 @@ const ReferralPage = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Referral Program</h1>
-          <p className="text-gray-600 mt-1">Earn ₹50 for every friend you refer</p>
+          <p className="text-gray-600 mt-1">Earn ₹50 when your referral makes their first payment</p>
         </div>
 
         {/* Stats Cards */}
@@ -286,7 +291,7 @@ const ReferralPage = () => {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">You Earn ₹50</h3>
               <p className="text-sm text-gray-600">
-                ₹50 is automatically credited to your wallet
+                ₹50 is automatically credited to your wallet when they make their first payment
               </p>
             </div>
           </div>
@@ -317,8 +322,11 @@ const ReferralPage = () => {
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
                       Joined Date
                     </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Payment Status
+                    </th>
                     <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                      Status
+                      Reward
                     </th>
                   </tr>
                 </thead>
@@ -354,10 +362,25 @@ const ReferralPage = () => {
                           day: "numeric",
                         })}
                       </td>
+                      <td className="py-3 px-4">
+                        {referral.paymentStatus === "success" ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <FiCheck className="w-3 h-3 mr-1" />
+                            Payment Success
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <FiDollarSign className="w-3 h-3 mr-1" />
+                            Payment Pending
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-right">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Active
-                        </span>
+                        {referral.rewardEarned > 0 ? (
+                          <span className="text-green-600 font-semibold">₹{referral.rewardEarned}</span>
+                        ) : (
+                          <span className="text-gray-400">₹0</span>
+                        )}
                       </td>
                     </tr>
                   ))}

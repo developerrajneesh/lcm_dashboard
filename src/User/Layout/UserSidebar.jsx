@@ -8,7 +8,6 @@ import {
   FiSettings,
   FiCreditCard,
   FiMessageCircle,
-  FiDollarSign,
   FiGift,
 } from "react-icons/fi";
 
@@ -18,7 +17,6 @@ const UserSidebar = ({ sidebarOpen, toggleSidebar }) => {
     { path: "/user/marketing", icon: FiTrendingUp, label: "Marketing" },
     { path: "/user/creative-workshop", icon: FiImage, label: "Creative Workshop" },
     { path: "/user/subscription", icon: FiCreditCard, label: "Subscription" },
-    { path: "/user/wallet", icon: FiDollarSign, label: "Wallet" },
     { path: "/user/referral", icon: FiGift, label: "Referral" },
     { path: "/user/chat-support", icon: FiMessageCircle, label: "Chat Support" },
     { path: "/user/settings", icon: FiSettings, label: "Settings" },

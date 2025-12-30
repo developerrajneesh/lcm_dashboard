@@ -610,6 +610,45 @@ const ImageTextEditor = () => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             placeholder="Enter text content"
                           />
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-500 mb-2">Available placeholders (will be replaced with user data on download):</p>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentText = text.text || '';
+                                  updateText(selectedImageIndex, text.id, 'text', currentText + '{{username}}');
+                                }}
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                              >
+                                {'{{username}}'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentText = text.text || '';
+                                  updateText(selectedImageIndex, text.id, 'text', currentText + '{{usernumber}}');
+                                }}
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                              >
+                                {'{{usernumber}}'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentText = text.text || '';
+                                  updateText(selectedImageIndex, text.id, 'text', currentText + '{{userLogo}}');
+                                }}
+                                className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors"
+                                title="Note: {{userLogo}} will be replaced with user's profile image"
+                              >
+                                {'{{userLogo}}'}
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Note: {'{{userLogo}}'} should be used in a separate image element, not in text
+                            </p>
+                          </div>
                         </div>
 
                         <div className="mb-4">

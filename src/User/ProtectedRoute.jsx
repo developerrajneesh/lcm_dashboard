@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { useSubscription } from "../hooks/useSubscription";
+import { hasActiveSubscription } from "../utils/subscription";
+import UpgradePrompt from "../Components/UpgradePrompt";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, requireSubscription = false }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
 
   useEffect(() => {
     checkAuthentication();
@@ -44,7 +48,7 @@ const ProtectedRoute = ({ children }) => {
     }
   };
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -55,6 +59,13 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     // Redirect to login with the current location so we can redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Check subscription if required
+  if (requireSubscription && !hasActiveSubscription(subscription)) {
+    return (
+      <UpgradePrompt message="You need an active subscription to access the dashboard. Please subscribe to a plan to continue." />
+    );
   }
 
   return children;

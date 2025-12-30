@@ -108,12 +108,22 @@ const SignUp = () => {
       return false;
     }
 
-    if (formData.phoneNumber && formData.phoneNumber.trim()) {
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-      if (!phoneRegex.test(formData.phoneNumber.replace(/\s/g, ""))) {
-        setError("Please enter a valid phone number");
-        return false;
-      }
+    // Phone number is required
+    if (!formData.phoneNumber || !formData.phoneNumber.trim()) {
+      setError("Phone number is required");
+      return false;
+    }
+    
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(formData.phoneNumber.replace(/\s/g, ""))) {
+      setError("Please enter a valid phone number");
+      return false;
+    }
+
+    // Profile image is required
+    if (!formData.profileImage) {
+      setError("Profile image is required");
+      return false;
     }
 
     return true;
@@ -140,8 +150,8 @@ const SignUp = () => {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
-          phoneNumber: formData.phoneNumber.trim() || undefined,
-          profileImage: formData.profileImage || undefined,
+          phoneNumber: formData.phoneNumber.trim(),
+          profileImage: formData.profileImage,
           referralCode: formData.referralCode.trim().toUpperCase() || undefined,
         }),
       });
@@ -265,7 +275,7 @@ const SignUp = () => {
                     <div className="profile-image-placeholder">
                       <FiCamera className="camera-icon" />
                       <span>Upload Photo</span>
-                      <span className="hint">(Optional)</span>
+                      <span className="hint required">(Required)</span>
                     </div>
                   )}
                   <input
@@ -318,7 +328,7 @@ const SignUp = () => {
             <div className="form-group">
               <label htmlFor="phoneNumber">
                 <FiPhone className="input-icon" />
-                Phone Number <span className="hint">(Optional)</span>
+                Phone Number <span className="required">*</span>
               </label>
               <input
                 type="tel"
@@ -327,6 +337,7 @@ const SignUp = () => {
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
                 placeholder="Enter your phone number"
+                required
                 className="form-input"
               />
             </div>

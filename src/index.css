@@ -18,3 +18,33 @@
 .account-list-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Particles canvas styling */
+#tsparticles {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+#tsparticles canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Pricing particles */
+#pricing-particles {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+#pricing-particles canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}

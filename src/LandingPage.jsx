@@ -1,13 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
+import { motion, useScroll, useTransform } from "framer-motion";
+import Particles from "react-particles";
+import { loadSlim } from "tsparticles-slim";
+import Confetti from "react-confetti";
+import {
+  FiTrendingUp,
+  FiImage,
+  FiMessageCircle,
+  FiMail,
+  FiPhone,
+  FiCheck,
+  FiStar,
+  FiZap,
+  FiShield,
+  FiAward,
+  FiArrowRight,
+  FiMenu,
+  FiX,
+  FiLinkedin,
+  FiInstagram,
+  FiFacebook,
+  FiYoutube,
+  FiMail as FiEmail,
+  FiMessageSquare,
+  FiDownload,
+  FiSmartphone,
+} from "react-icons/fi";
 
 const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [confettiActive, setConfettiActive] = useState({});
+  const [cardDimensions, setCardDimensions] = useState({});
+  const cardRefs = useRef({});
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const { scrollY } = useScroll();
+  const headerOpacity = useTransform(scrollY, [0, 100], [0.95, 1]);
+  
+  // Backend URL for APK download
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const apkDownloadUrl = `${BACKEND_URL}/download/lcm.apk`;
 
   useEffect(() => {
-    // Check if user is logged in
     try {
       const user = localStorage.getItem("user");
       const authToken = localStorage.getItem("authToken");
@@ -31,6 +68,67 @@ const LandingPage = () => {
     }
   }, []);
 
+  // Testimonials data
+  const testimonials = [
+    {
+      id: 1,
+      name: "Rajesh Kumar",
+      company: "Tech Solutions India",
+      location: "Mumbai, Maharashtra",
+      rating: 5,
+      text: "LCM has transformed our marketing campaigns! The Meta Ads management is incredibly intuitive, and we've seen a 3x increase in our ROI. The support team is always responsive and helpful.",
+    },
+    {
+      id: 2,
+      name: "Priya Sharma",
+      company: "Digital Marketing Pro",
+      location: "Delhi, NCR",
+      rating: 5,
+      text: "Best marketing platform I've used! The WhatsApp marketing feature helped us reach 10,000+ customers in just one month. The pricing is very affordable for small businesses like ours.",
+    },
+    {
+      id: 3,
+      name: "Amit Patel",
+      company: "E-commerce Ventures",
+      location: "Ahmedabad, Gujarat",
+      rating: 5,
+      text: "The IVR campaign feature is a game-changer! We've automated our customer engagement and seen a 40% increase in lead conversion. The platform is easy to use and the results speak for themselves.",
+    },
+    {
+      id: 4,
+      name: "Sneha Reddy",
+      company: "Creative Agency Hub",
+      location: "Bangalore, Karnataka",
+      rating: 5,
+      text: "Love the Creative Workshop feature! We can create stunning festival creatives in minutes. The email marketing campaigns have improved our customer retention significantly. Highly recommended!",
+    },
+    {
+      id: 5,
+      name: "Vikram Singh",
+      company: "Startup Growth Co.",
+      location: "Pune, Maharashtra",
+      rating: 5,
+      text: "As a startup, we needed an all-in-one solution, and LCM delivered perfectly! The Premium Plan gives us access to all features at a great price. Our marketing efficiency has improved by 60%.",
+    },
+    {
+      id: 6,
+      name: "Anjali Mehta",
+      company: "Retail Marketing Solutions",
+      location: "Chennai, Tamil Nadu",
+      rating: 5,
+      text: "The SMS marketing feature has been incredible for our retail business. We can send targeted offers to customers instantly. The analytics dashboard helps us track everything in real-time.",
+    },
+  ];
+
+  // Auto-scroll testimonials carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000); // Change every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
   const getDashboardPath = () => {
     return userRole === "admin" ? "/admin" : "/user";
   };
@@ -39,53 +137,127 @@ const LandingPage = () => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
+  const plans = [
+    {
+      id: 1,
+      name: "BASIC PLAN",
+      regularPrice: 2000,
+      earlyBirdPrice: 999,
+      discount: 50,
+      period: "month",
+      features: [
+        "Meta Ads",
+        "WhatsApp Marketing",
+        "Email Marketing",
+        "Premium Festival Creatives",
+        "Basic Customer Support",
+      ],
+      popular: false,
+    },
+    {
+      id: 2,
+      name: "PREMIUM PLAN",
+      regularPrice: 5000,
+      earlyBirdPrice: 2999,
+      discount: 40,
+      period: "month",
+      features: [
+        "Meta Ads",
+        "WhatsApp Marketing",
+        "Email Marketing",
+        "SMS Marketing",
+        "IVR Voice Campaign",
+        "24x7 Priority Support",
+        "Premium Festival Creatives",
+      ],
+      popular: true,
+    },
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+      },
+    },
+  };
+
+  const particlesInit = useCallback(async (engine) => {
+    try {
+      await loadSlim(engine);
+    } catch (error) {
+      console.error("Error loading particles:", error);
+    }
+  }, []);
+
+  const particlesLoaded = useCallback(async (container) => {
+    console.log("Particles container loaded:", container);
+  }, []);
+
   return (
-    <div className="font-sans text-gray-800 bg-white overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-md border-b border-gray-100">
+    <div className="font-sans text-gray-800 bg-gradient-to-br from-teal-600 via-emerald-500 to-lime-400 min-h-screen overflow-x-hidden relative">
+      {/* Fixed Navigation */}
+      <motion.nav
+        style={{ opacity: headerOpacity }}
+        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-br from-teal-600 via-emerald-500 to-lime-400 backdrop-blur-md shadow-lg border-b border-white/20"
+      >
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center space-x-3"
+          >
             <img 
               src="/LCMLOGO.png" 
               alt="LCM Logo" 
               className="h-10 w-auto"
             />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold text-white">
               LCM
             </span>
-          </div>
+          </motion.div>
+          
+          {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
             <a
               href="#features"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
+              className="text-white hover:text-yellow-300 transition font-medium"
             >
               Features
             </a>
             <a
               href="#how-it-works"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
+              className="text-white hover:text-yellow-300 transition font-medium"
             >
               How It Works
             </a>
             <a
               href="#pricing"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
+              className="text-white hover:text-yellow-300 transition font-medium"
             >
               Pricing
             </a>
             <a
-              href="#testimonials"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
+              href="#contact"
+              className="text-white hover:text-yellow-300 transition font-medium"
             >
-              Testimonials
-            </a>
-            <a
-              href="#faq"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
-            >
-              FAQ
+              Contact
             </a>
           </div>
+          
           <div className="flex items-center space-x-3 md:space-x-4">
             {isLoggedIn ? (
               <Link
@@ -98,7 +270,7 @@ const LandingPage = () => {
               <>
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 font-semibold transition text-sm md:text-base"
+                  className="text-white hover:text-yellow-300 font-semibold transition text-sm md:text-base hidden md:block"
                 >
                   Login
                 </Link>
@@ -110,36 +282,245 @@ const LandingPage = () => {
                 </Link>
               </>
             )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-white"
+            >
+              {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            </button>
           </div>
         </div>
-      </nav>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-gradient-to-br from-teal-600 via-emerald-500 to-lime-400 border-t border-white/20 z-40"
+          >
+            <div className="container mx-auto px-6 py-4 space-y-4">
+              <a
+                href="#features"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-white hover:text-yellow-300 transition font-medium"
+              >
+                Features
+              </a>
+              <a
+                href="#how-it-works"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-white hover:text-yellow-300 transition font-medium"
+              >
+                How It Works
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-white hover:text-yellow-300 transition font-medium"
+              >
+                Pricing
+              </a>
+              <a
+                href="#contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-white hover:text-yellow-300 transition font-medium"
+              >
+                Contact
+              </a>
+              {!isLoggedIn && (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-white hover:text-yellow-300 font-semibold transition"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </motion.nav>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white py-20 md:py-32 overflow-hidden">
-        {/* Animated Background Elements */}
+      <section className="relative bg-gradient-to-br from-teal-700 via-emerald-600 to-lime-500 text-white pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden z-10">
+        {/* Galaxy Particles - Hero Section Only */}
+        <div 
+          className="absolute inset-0 overflow-hidden"
+          style={{ zIndex: 1 }}
+        >
+          <Particles
+            id="galaxy-particles"
+            init={particlesInit}
+            loaded={particlesLoaded}
+            options={{
+              background: {
+                color: {
+                  value: "transparent",
+                },
+              },
+              fpsLimit: 60,
+              interactivity: {
+                events: {
+                  onClick: {
+                    enable: true,
+                    mode: "push",
+                  },
+                  onHover: {
+                    enable: true,
+                    mode: "grab",
+                  },
+                  resize: true,
+                },
+                modes: {
+                  push: {
+                    quantity: 3,
+                  },
+                  grab: {
+                    distance: 200,
+                    links: {
+                      opacity: 0.5,
+                    },
+                  },
+                },
+              },
+              particles: {
+                color: {
+                  value: "#ffffff",
+                },
+                links: {
+                  color: "#ffffff",
+                  distance: 200,
+                  enable: true,
+                  opacity: 0.3,
+                  width: 1,
+                },
+                collisions: {
+                  enable: false,
+                },
+                move: {
+                  direction: "none",
+                  enable: true,
+                  outModes: {
+                    default: "bounce",
+                  },
+                  random: true,
+                  speed: 0.5,
+                  straight: false,
+                  attract: {
+                    enable: true,
+                    rotateX: 600,
+                    rotateY: 1200,
+                  },
+                },
+                number: {
+                  density: {
+                    enable: true,
+                    area: 1000,
+                  },
+                  value: 100,
+                },
+                opacity: {
+                  value: 0.8,
+                  random: {
+                    enable: true,
+                    minimumValue: 0.3,
+                  },
+                  animation: {
+                    enable: true,
+                    speed: 0.5,
+                    minimumValue: 0.2,
+                    sync: false,
+                  },
+                },
+                shape: {
+                  type: ["circle", "star"],
+                  options: {
+                    star: {
+                      sides: 5,
+                    },
+                  },
+                },
+                size: {
+                  value: { min: 1, max: 4 },
+                  random: {
+                    enable: true,
+                    minimumValue: 0.5,
+                  },
+                  animation: {
+                    enable: true,
+                    speed: 2,
+                    minimumValue: 0.5,
+                    sync: false,
+                  },
+                },
+              },
+              detectRetina: true,
+            }}
+          />
+        </div>
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.2, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+            }}
+            className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.1, 0.2, 0.1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+            }}
+            className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"
+          />
         </div>
         
         <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="md:w-1/2 text-center md:text-left">
-              <div className="inline-block mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="flex flex-col md:flex-row items-center gap-12"
+          >
+            <motion.div variants={itemVariants} className="md:w-1/2 text-center md:text-left">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="inline-block mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold"
+              >
                 🚀 All-in-One Marketing Platform
-              </div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
+              </motion.div>
+              <motion.h1
+                variants={itemVariants}
+                className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6"
+              >
                 Manage Your
                 <span className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
                   Marketing Campaigns
                 </span>
                 Like a Pro
-              </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-100 leading-relaxed">
+              </motion.h1>
+              <motion.p
+                variants={itemVariants}
+                className="text-xl md:text-2xl mb-8 text-blue-100 leading-relaxed"
+              >
                 Meta Ads, IVR Calls, WhatsApp, Email & SMS Marketing - All in one powerful platform. 
                 Create, manage, and optimize your campaigns with ease.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              </motion.p>
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col sm:flex-row gap-4 mb-8"
+              >
                 {isLoggedIn ? (
                   <Link
                     to={getDashboardPath()}
@@ -161,72 +542,126 @@ const LandingPage = () => {
                 >
                   Explore Features
                 </a>
-              </div>
-              <div className="flex items-center gap-8 text-sm">
+              </motion.div>
+              {/* Download APK Section */}
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6"
+              >
+                <motion.a
+                  href={apkDownloadUrl}
+                  download="LCM.apk"
+                  className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl transition-all duration-300 transform hover:scale-110 hover:shadow-purple-500/50 flex items-center gap-3 overflow-hidden"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></span>
+                  <FiSmartphone className="w-6 h-6 relative z-10" />
+                  <span className="relative z-10">Download Mobile App</span>
+                  <FiDownload className="w-5 h-5 relative z-10 group-hover:translate-y-1 transition-transform" />
+                </motion.a>
+                <div className="flex items-center gap-2 text-white/80 text-sm">
+                  <FiCheck className="w-4 h-4 text-green-300" />
+                  <span>Free Download</span>
+                </div>
+              </motion.div>
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-wrap items-center gap-6 text-sm"
+              >
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+                  <FiStar className="w-5 h-5 text-yellow-300" />
                   <span className="font-semibold">4.9/5 Rating</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold">10,000+ Users</span>
+                  <FiCheck className="w-5 h-5 text-green-300" />
+                  <span className="font-semibold">5,000+ Users</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-                  </svg>
+                  <FiShield className="w-5 h-5 text-blue-300" />
                   <span className="font-semibold">99.9% Uptime</span>
                 </div>
-              </div>
-            </div>
-            <div className="md:w-1/2 flex justify-center">
-              <div className="relative w-full max-w-md">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl blur-2xl opacity-50 transform rotate-6"></div>
-                <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl border-2 border-white/20 p-6 shadow-2xl">
-                  <div className="absolute -top-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold px-4 py-2 rounded-full shadow-xl animate-pulse">
+              </motion.div>
+            </motion.div>
+            <motion.div
+              variants={itemVariants}
+              className="md:w-1/2 flex justify-center"
+            >
+              <motion.div
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                }}
+                className="relative w-full max-w-2xl z-10"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl blur-2xl opacity-50 transform rotate-6 z-0" />
+                <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl border-2 border-white/20 p-2 md:p-4 shadow-2xl z-10">
+                  <div className="absolute -top-4 -right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold px-4 py-2 rounded-full shadow-xl z-20">
                     NEW
                   </div>
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-8 text-center">
-                    <div className="text-6xl mb-4">📱</div>
-                    <h3 className="text-2xl font-bold mb-2">Mobile & Web</h3>
-                    <p className="text-blue-100">Access from anywhere, anytime</p>
+                  <div className="relative rounded-2xl">
+                    <img 
+                      src="/10902.jpg" 
+                      alt="LCM Marketing Platform" 
+                      className="w-full h-auto object-contain rounded-2xl"
+                    />
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white border-b border-gray-100">
+      <section className="py-16 bg-white/10 backdrop-blur-sm border-b border-white/20 relative z-10">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          >
             {[
-              { number: "10K+", label: "Active Users" },
-              { number: "50K+", label: "Campaigns Created" },
-              { number: "₹5Cr+", label: "Ad Spend Managed" },
+              { number: "5K", label: "Active Users" },
+              { number: "12K", label: "Campaigns Created" },
+              { number: "₹2.5Cr", label: "Ad Spend Managed" },
               { number: "99.9%", label: "Uptime Guarantee" },
             ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className="text-center"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, type: "spring" }}
+                  className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2"
+                >
                   {stat.number}
-                </div>
+                </motion.div>
                 <div className="text-gray-600 font-medium">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section id="features" className="py-20 bg-white/5 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <div className="inline-block px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold mb-4">
               Powerful Features
             </div>
@@ -239,86 +674,141 @@ const LandingPage = () => {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Comprehensive marketing tools designed to help you reach your audience across all channels
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
             {[
               {
-                icon: "📊",
+                icon: <FiTrendingUp className="w-8 h-8" />,
                 title: "Meta Ads Management",
                 desc: "Create, manage, and optimize your Facebook & Instagram ad campaigns with precision targeting and powerful analytics.",
                 color: "from-blue-500 to-blue-600",
               },
               {
-                icon: "📞",
+                icon: <FiPhone className="w-8 h-8" />,
                 title: "IVR Call Marketing",
                 desc: "Interactive Voice Response system for automated customer engagement and lead generation.",
                 color: "from-green-500 to-green-600",
               },
               {
-                icon: "💬",
+                icon: <FiMessageSquare className="w-8 h-8" />,
                 title: "WhatsApp Marketing",
-                desc: "Reach customers directly on WhatsApp with personalized messages and automated campaigns. (Coming Soon)",
+                desc: "Reach customers directly on WhatsApp with personalized messages and automated campaigns.",
                 color: "from-emerald-500 to-emerald-600",
               },
               {
-                icon: "📧",
+                icon: <FiMail className="w-8 h-8" />,
                 title: "Email Marketing",
-                desc: "Create effective email campaigns with beautiful templates and advanced automation. (Coming Soon)",
+                desc: "Create effective email campaigns with beautiful templates and advanced automation.",
                 color: "from-red-500 to-red-600",
               },
               {
-                icon: "💬",
+                icon: <FiMessageCircle className="w-8 h-8" />,
                 title: "SMS Marketing",
-                desc: "Send targeted text messages with high open rates and instant delivery. (Coming Soon)",
+                desc: "Send targeted text messages with high open rates and instant delivery.",
                 color: "from-purple-500 to-purple-600",
               },
               {
-                icon: "🎨",
+                icon: <FiImage className="w-8 h-8" />,
                 title: "Creative Workshop",
                 desc: "Admin-controlled creative management with drag-and-drop functionality and real-time preview.",
                 color: "from-pink-500 to-pink-600",
               },
               {
-                icon: "📈",
+                icon: <FiTrendingUp className="w-8 h-8" />,
                 title: "Advanced Analytics",
                 desc: "Real-time performance metrics, ROI tracking, and detailed insights across all your campaigns.",
                 color: "from-indigo-500 to-indigo-600",
               },
               {
-                icon: "🤖",
+                icon: <FiZap className="w-8 h-8" />,
                 title: "AI-Powered Insights",
                 desc: "Get intelligent recommendations and automated optimizations powered by advanced AI algorithms.",
                 color: "from-cyan-500 to-cyan-600",
               },
               {
-                icon: "💳",
+                icon: <FiAward className="w-8 h-8" />,
                 title: "Flexible Subscriptions",
-                desc: "Choose from monthly, yearly, or combo plans that fit your business needs and budget.",
+                desc: "Choose from monthly plans that fit your business needs and budget.",
                 color: "from-orange-500 to-orange-600",
               },
             ].map((feature, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2"
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                className="group bg-white/40 backdrop-blur-md p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 hover:border-white/40"
               >
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform`}>
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-2xl font-bold mb-3 text-gray-800">
                   {feature.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Visual Showcase Section */}
+      <section className="py-20 bg-white/10 backdrop-blur-sm relative z-10">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+          >
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              className="relative group z-10"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity z-0" />
+              <div className="relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/30 z-10">
+                <img 
+                  src="/5616698.jpg" 
+                  alt="Marketing Solutions" 
+                  className="w-full h-auto object-contain rounded-2xl"
+                />
+              </div>
+            </motion.div>
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              className="relative group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-3xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity" />
+              <div className="relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/30">
+                <img 
+                  src="/86652-OI65AH-119.jpg" 
+                  alt="Business Growth" 
+                  className="w-full h-auto object-contain rounded-2xl"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-white">
+      <section id="how-it-works" className="py-20 bg-white/5 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <div className="inline-block px-4 py-2 bg-indigo-100 text-indigo-600 rounded-full text-sm font-semibold mb-4">
               Simple Process
             </div>
@@ -328,49 +818,59 @@ const LandingPage = () => {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Get started in just 4 simple steps
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-5xl mx-auto">
             <div className="relative">
-              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500 transform -translate-x-1/2"></div>
+              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500 transform -translate-x-1/2" />
 
-              <div className="space-y-16">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={containerVariants}
+                className="space-y-16"
+              >
                 {[
                   {
                     step: "1",
                     title: "Sign Up & Connect",
                     desc: "Create your free account and connect your Meta (Facebook) account securely with one-click OAuth integration.",
-                    icon: "🔐",
+                    icon: <FiShield className="w-6 h-6" />,
                   },
                   {
                     step: "2",
                     title: "Choose Your Channel",
                     desc: "Select from Meta Ads, IVR Calls, WhatsApp, Email, or SMS marketing based on your campaign goals.",
-                    icon: "📱",
+                    icon: <FiTrendingUp className="w-6 h-6" />,
                   },
                   {
                     step: "3",
                     title: "Create & Launch",
                     desc: "Use our intuitive interface to set up campaigns, upload creatives, and launch with advanced targeting options.",
-                    icon: "🚀",
+                    icon: <FiZap className="w-6 h-6" />,
                   },
                   {
                     step: "4",
                     title: "Monitor & Optimize",
                     desc: "Track real-time performance, analyze metrics, and use AI-powered insights to optimize your campaigns.",
-                    icon: "📊",
+                    icon: <FiAward className="w-6 h-6" />,
                   },
                 ].map((item, index) => (
-                  <div
+                  <motion.div
                     key={index}
+                    variants={itemVariants}
                     className={`relative flex flex-col md:flex-row items-center ${
                       index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
                     }`}
                   >
                     <div className={`md:w-1/2 ${index % 2 === 0 ? "md:pr-12" : "md:pl-12"} mb-8 md:mb-0`}>
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border border-blue-100">
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl border border-white/30"
+                      >
                         <div className="flex items-center gap-4 mb-4">
-                          <div className="text-4xl">{item.icon}</div>
+                          <div className="text-4xl text-blue-600">{item.icon}</div>
                           <div>
                             <div className="text-sm font-semibold text-blue-600 mb-1">STEP {item.step}</div>
                             <h3 className="text-2xl font-bold text-gray-800">
@@ -379,407 +879,684 @@ const LandingPage = () => {
                           </div>
                         </div>
                         <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-                      </div>
+                      </motion.div>
                     </div>
-                    <div className="hidden md:flex absolute left-1/2 -ml-6 h-12 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full items-center justify-center text-white font-bold text-xl z-10 shadow-xl">
+                    <div className="hidden md:flex absolute left-1/2 -ml-6 h-12 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full items-center justify-center text-white font-bold text-xl z-20 shadow-xl">
                       {item.step}
                     </div>
                     <div className="md:w-1/2"></div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-white/10 backdrop-blur-sm relative z-10">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-block px-4 py-2 bg-white/90 backdrop-blur-md text-green-700 rounded-full text-sm font-semibold mb-4 border border-white/50">
+              Client Reviews
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-white drop-shadow-lg">
+              What Our Clients Say
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+              Trusted by thousands of businesses across India
+            </p>
+          </motion.div>
+
+          {/* Testimonials Carousel */}
+          <div className="max-w-5xl mx-auto relative">
+            <div className="overflow-hidden rounded-3xl">
+              <motion.div
+                className="flex transition-transform duration-500 ease-in-out"
+                animate={{
+                  x: `-${currentTestimonial * 100}%`,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+              >
+                {testimonials.map((testimonial, index) => (
+                  <div
+                    key={testimonial.id}
+                    className="min-w-full px-4"
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ 
+                        opacity: index === currentTestimonial ? 1 : 0.7,
+                        scale: index === currentTestimonial ? 1 : 0.95,
+                      }}
+                      className="bg-white/95 backdrop-blur-lg p-8 md:p-12 rounded-3xl border border-white/50 shadow-2xl"
+                    >
+                      {/* Rating Stars */}
+                      <div className="flex justify-center mb-6">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <FiStar
+                            key={i}
+                            className="w-6 h-6 text-yellow-400 fill-current"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Testimonial Text */}
+                      <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-lg md:text-xl text-gray-700 text-center mb-8 leading-relaxed italic"
+                      >
+                        "{testimonial.text}"
+                      </motion.p>
+
+                      {/* Client Info */}
+                      <div className="text-center">
+                        <h4 className="text-xl font-bold text-gray-900 mb-1">
+                          {testimonial.name}
+                        </h4>
+                        <p className="text-gray-600 font-medium mb-1">
+                          {testimonial.company}
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          {testimonial.location}
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Carousel Navigation Dots */}
+            <div className="flex justify-center gap-3 mt-8">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTestimonial(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentTestimonial
+                      ? "bg-white w-8"
+                      : "bg-white/50 hover:bg-white/75"
+                  }`}
+                  aria-label={`Go to testimonial ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Arrows */}
+            <button
+              onClick={() =>
+                setCurrentTestimonial(
+                  (prev) => (prev - 1 + testimonials.length) % testimonials.length
+                )
+              }
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-20"
+              aria-label="Previous testimonial"
+            >
+              <FiArrowRight className="w-6 h-6 text-gray-700 rotate-180" />
+            </button>
+            <button
+              onClick={() =>
+                setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
+              }
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 z-20"
+              aria-label="Next testimonial"
+            >
+              <FiArrowRight className="w-6 h-6 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Testimonial Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+          >
+            {[
+              { number: "4.9/5", label: "Average Rating", icon: <FiStar className="w-6 h-6" /> },
+              { number: "500+", label: "Happy Clients", icon: <FiCheck className="w-6 h-6" /> },
+              { number: "98%", label: "Satisfaction Rate", icon: <FiAward className="w-6 h-6" /> },
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="text-center bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-white/50"
+              >
+                <div className="flex justify-center mb-3 text-yellow-500">
+                  {stat.icon}
+                </div>
+                <div className="text-3xl font-extrabold text-gray-900 mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-gray-600 font-medium">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-block px-4 py-2 bg-green-100 text-green-600 rounded-full text-sm font-semibold mb-4">
-              Affordable Pricing
-            </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-900">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Choose the plan that works best for your business needs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {[
-              {
-                name: "Basic Plan",
-                price: "₹999",
-                originalPrice: "₹1,499",
-                period: "month",
-                features: [
-                  "Unlimited Creatives",
-                  "Meta Ads Access",
-                  "Basic Analytics",
-                  "Email Support",
-                  "1 Ad Account",
-                ],
-                popular: false,
-                badge: "Early Bird",
+      <section id="pricing" className="py-20 bg-white/10 backdrop-blur-sm relative z-10">
+        {/* Grid Particles Pattern */}
+        <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }}>
+          <Particles
+            id="pricing-particles"
+            init={particlesInit}
+            loaded={particlesLoaded}
+            options={{
+              background: {
+                color: {
+                  value: "transparent",
+                },
               },
-              {
-                name: "Professional Plan",
-                price: "₹2,499",
-                originalPrice: "₹3,499",
-                period: "month",
-                features: [
-                  "Everything in Basic",
-                  "Advanced Analytics",
-                  "Priority Support",
-                  "Multiple Ad Accounts",
-                  "AI Assistance",
-                  "IVR Call Marketing",
-                ],
-                popular: true,
-                badge: "Most Popular",
+              fpsLimit: 60,
+              interactivity: {
+                events: {
+                  onHover: {
+                    enable: false,
+                  },
+                  resize: true,
+                },
               },
-              {
-                name: "Enterprise Plan",
-                price: "₹4,999",
-                originalPrice: "₹6,999",
-                period: "month",
-                features: [
-                  "Everything in Professional",
-                  "Unlimited Everything",
-                  "24/7 Dedicated Support",
-                  "Custom Integrations",
-                  "Dedicated Account Manager",
-                  "All Marketing Channels",
-                ],
-                popular: false,
-                badge: "Best Value",
+              particles: {
+                color: {
+                  value: "#ffffff",
+                },
+                links: {
+                  enable: true,
+                  color: "#ffffff",
+                  distance: 80,
+                  opacity: 0.3,
+                  width: 1,
+                },
+                collisions: {
+                  enable: false,
+                },
+                move: {
+                  enable: true,
+                  direction: "none",
+                  outModes: {
+                    default: "bounce",
+                  },
+                  random: true,
+                  speed: 0.5,
+                  straight: false,
+                },
+                number: {
+                  density: {
+                    enable: true,
+                    area: 800,
+                  },
+                  value: 80,
+                },
+                opacity: {
+                  value: 0.6,
+                },
+                shape: {
+                  type: "square",
+                },
+                size: {
+                  value: 4,
+                },
               },
-            ].map((plan, index) => (
-              <div
-                key={index}
-                className={`relative rounded-2xl overflow-hidden shadow-xl transition-all duration-300 ${
-                  plan.popular
-                    ? "border-2 border-blue-500 transform md:-translate-y-4 scale-105 bg-white"
-                    : "border border-gray-200 bg-white"
-                } hover:shadow-2xl`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm font-bold text-center">
-                    {plan.badge}
-                  </div>
-                )}
-                {!plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gray-800 text-white px-4 py-2 text-sm font-bold text-center">
-                    {plan.badge}
-                  </div>
-                )}
-                <div className={`p-8 ${plan.popular ? "pt-12" : "pt-12"}`}>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    {plan.name}
-                  </h3>
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-extrabold text-gray-900">
-                        {plan.price}
-                      </span>
-                      <span className="text-gray-600">/{plan.period}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-gray-400 line-through">
-                        {plan.originalPrice}
-                      </span>
-                      <span className="text-sm font-semibold text-green-600">
-                        Save {Math.round(((parseInt(plan.originalPrice.replace(/[₹,]/g, '')) - parseInt(plan.price.replace(/[₹,]/g, ''))) / parseInt(plan.originalPrice.replace(/[₹,]/g, ''))) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                  <ul className="space-y-4 mb-8">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <svg
-                          className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to={isLoggedIn ? getDashboardPath() : "/signup"}
-                    className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition transform hover:scale-105 ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                    } text-center block`}
-                  >
-                    {isLoggedIn ? "Go to Dashboard" : "Get Started"}
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <p className="text-gray-600 mb-4 text-lg">
-              💰 Looking for yearly billing? Save up to 20% with annual plans!
-            </p>
-            <Link
-              to="/user/subscription"
-              className="inline-block text-blue-600 hover:text-blue-800 font-semibold text-lg"
-            >
-              View Yearly Plans →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-700 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+              detectRetina: true,
+            }}
+          />
         </div>
         <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold mb-4">
-              Customer Stories
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-block px-4 py-2 bg-white/90 backdrop-blur-md text-green-700 rounded-full text-sm font-semibold mb-4 border border-white/50">
+              Affordable Pricing
             </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-              What Our Users Say
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-white drop-shadow-lg">
+              Simple, Transparent Pricing
             </h2>
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who are growing their business with LCM
+            <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+              Choose the plan that works best for your business needs
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                quote:
-                  "LCM has completely transformed how I manage my Meta ad campaigns. The interface is intuitive, and I've seen a 3x increase in ROI since switching. The IVR feature is a game-changer!",
-                name: "Rajesh Kumar",
-                role: "Digital Marketing Manager",
-                company: "TechStart India",
-                rating: 5,
-                avatar: "👨‍💼",
-              },
-              {
-                quote:
-                  "The campaign management features save me hours every week. Being able to manage Meta Ads, IVR, and plan for WhatsApp marketing all in one place is incredible. Worth every rupee!",
-                name: "Priya Sharma",
-                role: "E-commerce Owner",
-                company: "StyleHub",
-                rating: 5,
-                avatar: "👩‍💼",
-              },
-              {
-                quote:
-                  "Best marketing platform I've found. The analytics are incredibly detailed, and the AI-powered insights help me optimize campaigns in real-time. Customer support is top-notch!",
-                name: "Amit Patel",
-                role: "Marketing Director",
-                company: "GrowthCo",
-                rating: 5,
-                avatar: "👨‍💻",
-              },
-            ].map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl border border-white/20 hover:bg-white/15 transition-all transform hover:scale-105"
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto relative"
+          >
+            {plans.map((plan, index) => (
+              <motion.div
+                key={plan.id}
+                ref={(el) => {
+                  cardRefs.current[plan.id] = el;
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ 
+                  scale: plan.popular ? 1.05 : 1.03,
+                  y: plan.popular ? -8 : -5,
+                }}
+                onHoverStart={() => {
+                  const card = cardRefs.current[plan.id];
+                  if (card) {
+                    const rect = card.getBoundingClientRect();
+                    setCardDimensions(prev => ({
+                      ...prev,
+                      [plan.id]: {
+                        width: rect.width,
+                        height: rect.height,
+                      }
+                    }));
+                    setConfettiActive(prev => ({ ...prev, [plan.id]: true }));
+                    setTimeout(() => {
+                      setConfettiActive(prev => ({ ...prev, [plan.id]: false }));
+                    }, 3000);
+                  }
+                }}
+                className={`relative rounded-3xl transition-all duration-500 ${
+                  plan.popular
+                    ? "md:-mt-4 z-20"
+                    : "z-10"
+                }`}
+                style={{
+                  background: plan.popular 
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.90) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: plan.popular
+                    ? '0 20px 60px rgba(147, 51, 234, 0.3), 0 0 0 2px rgba(147, 51, 234, 0.2), inset 0 1px 0 rgba(255,255,255,0.8)'
+                    : '0 15px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.8)',
+                }}
               >
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className="w-6 h-6 text-yellow-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-lg italic mb-6 leading-relaxed">"{testimonial.quote}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">{testimonial.avatar}</div>
-                  <div>
-                    <div className="font-bold text-lg">{testimonial.name}</div>
-                    <div className="text-blue-100">{testimonial.role}</div>
-                    <div className="text-blue-200 text-sm">{testimonial.company}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-900">
-              Why Choose LCM?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to succeed in digital marketing
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: "⚡",
-                title: "Lightning Fast",
-                desc: "Set up campaigns in minutes, not hours",
-              },
-              {
-                icon: "🔒",
-                title: "Secure & Reliable",
-                desc: "Bank-level security with 99.9% uptime",
-              },
-              {
-                icon: "📱",
-                title: "Mobile First",
-                desc: "Manage everything from your phone",
-              },
-              {
-                icon: "🎯",
-                title: "AI-Powered",
-                desc: "Smart insights and optimizations",
-              },
-            ].map((benefit, index) => (
-              <div key={index} className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
-                <div className="text-5xl mb-4">{benefit.icon}</div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-block px-4 py-2 bg-purple-100 text-purple-600 rounded-full text-sm font-semibold mb-4">
-              Got Questions?
-            </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-900">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Find answers to common questions about LCM
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto space-y-4">
-            {[
-              {
-                question: "How do I connect my Meta (Facebook) account?",
-                answer:
-                  "Simply click the 'Connect with Facebook' button in the app or dashboard. You'll be redirected to Facebook's secure login page. Once authorized, your account will be connected automatically, and you can start managing your ad campaigns immediately.",
-              },
-              {
-                question: "Can I manage multiple Meta ad accounts?",
-                answer:
-                  "Yes! Our Professional and Enterprise plans support managing multiple Facebook and Instagram ad accounts from a single dashboard. You can easily switch between accounts and manage all your campaigns in one place.",
-              },
-              {
-                question: "What marketing channels are available?",
-                answer:
-                  "Currently, we support Meta Ads (Facebook & Instagram) and IVR Call Marketing. WhatsApp Marketing, Email Marketing, and SMS Marketing are coming soon. All channels will be accessible from the same platform.",
-              },
-              {
-                question: "Is there a free trial available?",
-                answer:
-                  "Yes! We offer a 14-day free trial for all our plans with full access to all features. No credit card required. You can cancel anytime during the trial period.",
-              },
-              {
-                question: "How does the AI assistance work?",
-                answer:
-                  "Our built-in AI analyzes your campaign performance and provides intelligent recommendations for optimization. It can suggest better targeting, ad creative improvements, budget adjustments, and answer questions about using the platform effectively.",
-              },
-              {
-                question: "Can I cancel my subscription anytime?",
-                answer:
-                  "Absolutely! You can cancel your subscription at any time from your account settings. You'll retain full access to all features until the end of your current billing period. No cancellation fees or penalties.",
-              },
-              {
-                question: "What payment methods do you accept?",
-                answer:
-                  "We accept all major credit cards, debit cards, UPI, and net banking. We also support annual billing with significant discounts. All payments are processed securely through our payment partners.",
-              },
-              {
-                question: "Do you offer customer support?",
-                answer:
-                  "Yes! Basic plan includes email support, Professional plan includes priority support, and Enterprise plan includes 24/7 dedicated support with a dedicated account manager. We also have comprehensive documentation and video tutorials.",
-              },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition"
-              >
-                <button
-                  onClick={() => toggleFaq(index)}
-                  className="w-full flex justify-between items-center p-6 text-left hover:bg-gray-50 transition"
-                >
-                  <span className="text-lg font-semibold text-gray-800 pr-4">
-                    {item.question}
-                  </span>
-                  <svg
-                    className={`w-6 h-6 text-gray-500 flex-shrink-0 transition-transform ${
-                      openFaq === index ? "transform rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
+                {/* Confetti inside card */}
+                {confettiActive[plan.id] && cardDimensions[plan.id] && (
+                  <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none" style={{ zIndex: 1000 }}>
+                    <Confetti
+                      width={cardDimensions[plan.id].width}
+                      height={cardDimensions[plan.id].height}
+                      recycle={false}
+                      numberOfPieces={200}
+                      gravity={0.3}
+                      colors={plan.popular 
+                        ? ['#9333EA', '#EC4899', '#F59E0B', '#10B981', '#3B82F6']
+                        : ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+                      }
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                      }}
                     />
-                  </svg>
-                </button>
-                {openFaq === index && (
-                  <div className="px-6 pb-6 text-gray-600 leading-relaxed animate-fadeIn">
-                    {item.answer}
                   </div>
                 )}
-              </div>
+                {plan.popular && (
+                  <motion.div 
+                    className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-[100] pointer-events-none"
+                    initial={{ scale: 0, y: -10 }}
+                    animate={{ scale: 1, y: 0 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  >
+                    <span className="bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-xs font-bold shadow-xl relative z-[100] inline-block">
+                      <span className="relative z-10">Most Popular</span>
+                      <span className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur opacity-50"></span>
+                    </span>
+                  </motion.div>
+                )}
+                <div className="overflow-hidden rounded-3xl">
+                  {/* Gradient overlay for popular card */}
+                  {plan.popular && (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500"></div>
+                  )}
+                  <div className={`p-8 ${plan.popular ? "pt-14" : "pt-8"} relative`}>
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100/50 to-pink-100/50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
+                    
+                    <div className="relative z-10">
+                      <h3 className={`text-2xl font-extrabold mb-4 ${
+                        plan.popular 
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+                          : "text-gray-800"
+                      }`}>
+                        {plan.name}
+                      </h3>
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <span className="text-5xl font-black text-gray-900 tracking-tight">
+                            ₹{plan.earlyBirdPrice.toLocaleString()}
+                          </span>
+                          <span className="text-gray-500 text-lg">/{plan.period}</span>
+                          {plan.discount && (
+                            <motion.span 
+                              className="ml-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md"
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              {plan.discount}% OFF
+                            </motion.span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-3">
+                          <span className="text-gray-400 line-through text-sm">
+                            From ₹{plan.regularPrice.toLocaleString()}
+                          </span>
+                          <span className="bg-gradient-to-r from-green-400 to-emerald-400 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                            Launching Offer
+                          </span>
+                        </div>
+                      </div>
+                      <ul className="space-y-4 mb-8">
+                        {plan.features.map((feature, i) => (
+                          <motion.li 
+                            key={i} 
+                            className="flex items-start group"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 * i }}
+                          >
+                            <div className="flex-shrink-0 mr-3 mt-0.5">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                <FiCheck className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                            <span className="text-gray-700 font-medium group-hover:text-gray-900 transition-colors">{feature}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link
+                          to={isLoggedIn ? "/user/subscription" : "/signup"}
+                          className={`w-full py-4 px-6 rounded-xl font-bold transition-all duration-300 text-center block relative overflow-hidden group ${
+                            plan.popular
+                              ? "bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white shadow-lg hover:shadow-xl"
+                              : "bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-md hover:shadow-lg"
+                          }`}
+                          style={{
+                            backgroundSize: plan.popular ? '200% 100%' : '100% 100%',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (plan.popular) {
+                              e.currentTarget.style.backgroundPosition = 'right center';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (plan.popular) {
+                              e.currentTarget.style.backgroundPosition = 'left center';
+                            }
+                          }}
+                        >
+                          <span className="relative z-10 flex items-center justify-center gap-2">
+                            {isLoggedIn ? "View Plan" : "Get Started"}
+                            <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </span>
+                          {plan.popular && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
+                          )}
+                        </Link>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-12 text-center"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                to="/user/subscription"
+                className="inline-flex items-center gap-2 text-white hover:text-yellow-300 font-semibold text-lg transition-colors bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 hover:bg-white/20 group"
+              >
+                View All Plans <FiArrowRight className="transition-transform group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-white/5 backdrop-blur-sm relative z-10">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-block px-4 py-2 bg-white/90 backdrop-blur-md text-green-700 rounded-full text-sm font-semibold mb-4 border border-white/50">
+              Get In Touch
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-white drop-shadow-lg">
+              Contact Us
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+              We're here to help! Reach out to us through any of these channels
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto relative z-10"
+          >
+            {/* Phone Numbers */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              className="relative z-10 bg-white/95 backdrop-blur-lg p-8 rounded-2xl border border-white/50 text-center shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiPhone className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Customer Support</h3>
+              <div className="space-y-2">
+                <a href="tel:8882921155" className="block text-blue-600 hover:text-blue-800 font-semibold">
+                  8882921155
+                </a>
+                <a href="tel:8506003018" className="block text-blue-600 hover:text-blue-800 font-semibold">
+                  8506003018
+                </a>
+              </div>
+            </motion.div>
+
+            {/* Email */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ scale: 1.05 }}
+              className="relative z-10 bg-white/95 backdrop-blur-lg p-8 rounded-2xl border border-white/50 text-center shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiEmail className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Email Us</h3>
+              <div className="space-y-2">
+                <a href="mailto:info@leadscraftmarketing.com" className="block text-green-600 hover:text-green-800 font-semibold text-sm break-all">
+                  info@leadscraftmarketing.com
+                </a>
+                <a href="mailto:support@leadscraftmarketing.com" className="block text-green-600 hover:text-green-800 font-semibold text-sm break-all">
+                  support@leadscraftmarketing.com
+                </a>
+              </div>
+            </motion.div>
+
+            {/* WhatsApp */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              whileHover={{ scale: 1.05 }}
+              className="relative z-10 bg-white/95 backdrop-blur-lg p-8 rounded-2xl border border-white/50 text-center shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiMessageSquare className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">WhatsApp</h3>
+              <div className="space-y-2">
+                <a
+                  href="https://wa.me/918882921155"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-emerald-600 hover:text-emerald-800 font-semibold transition-colors"
+                >
+                  8882921155
+                </a>
+                <a
+                  href="https://wa.me/918506003018"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-emerald-600 hover:text-emerald-800 font-semibold transition-colors"
+                >
+                  8506003018
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Social Media */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16 text-center"
+          >
+            <h3 className="text-2xl font-bold mb-8 text-white drop-shadow-lg">Follow Us</h3>
+            <div className="flex justify-center gap-6">
+              <motion.a
+                whileHover={{ scale: 1.2, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
+                href="https://www.linkedin.com/in/leads-craft-marketing-9404a3391?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition shadow-lg"
+              >
+                <FiLinkedin className="w-6 h-6" />
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, rotate: -5 }}
+                whileTap={{ scale: 0.9 }}
+                href="https://www.instagram.com/leads_craft_marketing?igsh=MWk1MmwyNDNiY2tsYw=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white hover:from-purple-600 hover:to-pink-600 transition shadow-lg"
+              >
+                <FiInstagram className="w-6 h-6" />
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
+                href="https://www.facebook.com/share/1D7f1u998J/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-14 h-14 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition shadow-lg"
+              >
+                <FiFacebook className="w-6 h-6" />
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, rotate: -5 }}
+                whileTap={{ scale: 0.9 }}
+                href="https://youtube.com/@leadscraftmarketing?si=vHG1KvhLr2H4RpNU"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700 transition shadow-lg"
+              >
+                <FiYoutube className="w-6 h-6" />
+              </motion.a>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-r from-teal-700 via-emerald-600 to-lime-500 text-white relative overflow-hidden z-10">
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <motion.div
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 100, 0],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+            }}
+            className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              x: [0, -100, 0],
+              y: [0, -100, 0],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+            }}
+            className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"
+          />
         </div>
         <div className="container mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-extrabold mb-6"
+          >
             Ready to Transform Your Marketing?
-          </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100">
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-xl mb-8 max-w-2xl mx-auto text-blue-100"
+          >
             Join thousands of marketers who are saving time, reducing costs, and boosting results with LCM
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
             {isLoggedIn ? (
               <Link
                 to={getDashboardPath()}
@@ -801,17 +1578,23 @@ const LandingPage = () => {
             >
               Learn More
             </a>
-          </div>
+          </motion.div>
           {!isLoggedIn && (
-            <p className="mt-6 text-blue-100">
-              No credit card required • 14-day free trial • Cancel anytime
-            </p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mt-6 text-blue-100"
+            >
+              No credit card required • Cancel anytime
+            </motion.p>
           )}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-12 relative z-10">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
@@ -857,10 +1640,10 @@ const LandingPage = () => {
                 </li>
                 <li>
                   <a
-                    href="#faq"
+                    href="#contact"
                     className="text-gray-400 hover:text-white transition"
                   >
-                    FAQ
+                    Contact
                   </a>
                 </li>
               </ul>
@@ -868,22 +1651,6 @@ const LandingPage = () => {
             <div>
               <h3 className="text-lg font-bold mb-4">Company</h3>
               <ul className="space-y-2">
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition"
-                  >
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition"
-                  >
-                    Careers
-                  </a>
-                </li>
                 <li>
                   <Link
                     to="/privacy-policy"
@@ -921,8 +1688,31 @@ const LandingPage = () => {
             <div>
               <h3 className="text-lg font-bold mb-4">Support</h3>
               <ul className="space-y-2">
-                <li className="text-gray-400">support@leadscraftmarketing.com</li>
-                <li className="text-gray-400">+91 98765 43210</li>
+                <li>
+                  <a href="mailto:support@leadscraftmarketing.com" className="text-gray-400 hover:text-white transition">
+                    support@leadscraftmarketing.com
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:8882921155" className="text-gray-400 hover:text-white transition">
+                    8882921155
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:8506003018" className="text-gray-400 hover:text-white transition">
+                    8506003018
+                  </a>
+                </li>
+                <li>
+                  <a href="https://wa.me/918882921155" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                    WhatsApp: 8882921155
+                  </a>
+                </li>
+                <li>
+                  <a href="https://wa.me/918506003018" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                    WhatsApp: 8506003018
+                  </a>
+                </li>
                 <li>
                   <Link
                     to="/login"
@@ -947,42 +1737,38 @@ const LandingPage = () => {
               © {new Date().getFullYear()} LeadsCraft Marketing (LCM). All rights reserved.
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                </svg>
+              <a
+                href="https://www.linkedin.com/in/leads-craft-marketing-9404a3391?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition"
+              >
+                <FiLinkedin className="w-6 h-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
+              <a
+                href="https://www.instagram.com/leads_craft_marketing?igsh=MWk1MmwyNDNiY2tsYw=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition"
+              >
+                <FiInstagram className="w-6 h-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
-                </svg>
+              <a
+                href="https://www.facebook.com/share/1D7f1u998J/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition"
+              >
+                <FiFacebook className="w-6 h-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition">
-              <svg
-                    className="w-6 h-6"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                  </a>
+              <a
+                href="https://youtube.com/@leadscraftmarketing?si=vHG1KvhLr2H4RpNU"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition"
+              >
+                <FiYoutube className="w-6 h-6" />
+              </a>
             </div>
           </div>
         </div>

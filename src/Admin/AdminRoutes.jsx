@@ -9,6 +9,7 @@ import CreativeManagement from "./pages/CreativeManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import ChatSupport from "./pages/ChatSupport";
 import IvrRequests from "./pages/IvrRequests";
+import UgcRequests from "./pages/UgcRequests";
 
 const AdminRoutes = () => {
   return (
@@ -27,6 +28,7 @@ const AdminRoutes = () => {
                 <Route path="/users" element={<UsersList />} />
                 <Route path="/chat-support" element={<ChatSupport />} />
                 <Route path="/ivr-requests" element={<IvrRequests />} />
+                <Route path="/ugc-requests" element={<UgcRequests />} />
                 <Route path="/settings" element={<AdminSettings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>

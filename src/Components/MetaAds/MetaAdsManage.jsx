@@ -13,6 +13,9 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
   const [adInsights, setAdInsights] = useState({}); // Store insights by ad ID
   
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [nextCursor, setNextCursor] = useState(null);
   const [actionMenu, setActionMenu] = useState(null);
 
   useEffect(() => {
@@ -21,17 +24,51 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
     }
   }, [adAccountId]);
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (loadMore = false) => {
     try {
-      setLoading(true);
-      const response = await campaignAPI.getAll(adAccountId);
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setCampaigns([]); // Clear existing campaigns on refresh
+        setHasMore(true);
+        setNextCursor(null);
+      }
+
+      const response = await campaignAPI.getAll(adAccountId, 25, loadMore ? nextCursor : null);
       if (response.data.success && response.data.campaigns?.data) {
-        setCampaigns(response.data.campaigns.data);
+        if (loadMore) {
+          // Append new campaigns to existing list
+          setCampaigns((prevCampaigns) => [...prevCampaigns, ...response.data.campaigns.data]);
+        } else {
+          // Replace campaigns on initial load or refresh
+          setCampaigns(response.data.campaigns.data);
+        }
+
+        // Check if there are more pages
+        const paging = response.data.campaigns?.paging;
+        if (paging?.cursors?.after) {
+          setNextCursor(paging.cursors.after);
+          setHasMore(true);
+        } else {
+          setNextCursor(null);
+          setHasMore(false);
+        }
+      } else {
+        if (!loadMore) {
+          setCampaigns([]);
+        }
+        setHasMore(false);
+        setNextCursor(null);
       }
     } catch (error) {
       console.error("Error fetching campaigns:", error);
+      if (!loadMore) {
+        setCampaigns([]);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -119,7 +156,7 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
     try {
       if (type === "campaign") {
         await campaignAPI.pause(id);
-        fetchCampaigns();
+        fetchCampaigns(false); // Reset pagination
       } else if (type === "adset") {
         await adsetAPI.pause(id);
         if (selectedCampaign) fetchAdSets(selectedCampaign.id);
@@ -137,7 +174,7 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
     try {
       if (type === "campaign") {
         await campaignAPI.activate(id);
-        fetchCampaigns();
+        fetchCampaigns(false); // Reset pagination
       } else if (type === "adset") {
         await adsetAPI.activate(id);
         if (selectedCampaign) fetchAdSets(selectedCampaign.id);
@@ -157,7 +194,7 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
     try {
       if (type === "campaign") {
         await campaignAPI.delete(id);
-        fetchCampaigns();
+        fetchCampaigns(false); // Reset pagination
       } else if (type === "adset") {
         await adsetAPI.delete(id);
         if (selectedCampaign) fetchAdSets(selectedCampaign.id);
@@ -169,6 +206,35 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
     } catch (error) {
       alert(`Failed to delete ${type}`);
     }
+  };
+
+  // Optimization goal display names
+  const optimizationGoalNames = {
+    "LINK_CLICKS": "Link Clicks",
+    "CONVERSIONS": "Conversions",
+    "VALUE": "Value",
+    "BRAND_AWARENESS": "Brand Awareness",
+    "AD_RECALL_LIFT": "Ad Recall Lift",
+    "REACH": "Reach",
+    "IMPRESSIONS": "Impressions",
+    "THRUPLAY": "ThruPlay",
+    "TWO_SECOND_VIDEO_VIEWS": "Two Second Video Views",
+    "LANDING_PAGE_VIEWS": "Landing Page Views",
+    "POST_ENGAGEMENT": "Post Engagement",
+    "CONVERSATIONS": "Conversations",
+    "PAGE_LIKES": "Page Likes",
+    "EVENT_RESPONSES": "Event Responses",
+    "LEAD_GENERATION": "Lead Generation",
+    "QUALITY_CALL": "Quality Call",
+    "OFFSITE_CONVERSIONS": "Offsite Conversions",
+    "PRODUCT_CATALOG_SALES": "Product Catalog Sales",
+    "APP_INSTALLS": "App Installs",
+    "APP_ENGAGEMENT": "App Engagement",
+    "VIDEO_VIEWS": "Video Views",
+  };
+
+  const getOptimizationGoalName = (optimizationGoal) => {
+    return optimizationGoalNames[optimizationGoal] || optimizationGoal || "N/A";
   };
 
   const getStatusColor = (status) => {
@@ -236,39 +302,103 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {campaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleCampaignClick(campaign)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-gray-900">{campaign.name}</h4>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          campaign.status
-                        )}`}
-                      >
-                        {campaign.status}
-                      </span>
+          <>
+            <div className="space-y-3">
+              {campaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-semibold text-gray-900">{campaign.name}</h4>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            campaign.status
+                          )}`}
+                        >
+                          {campaign.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span>Objective: {campaign.objective || "N/A"}</span>
+                        <span>ID: {campaign.id}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>Objective: {campaign.objective || "N/A"}</span>
-                      <span>ID: {campaign.id}</span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">View AdSets</span>
-                    <FiChevronRight className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mr-2">
+                        {campaign.status === "ACTIVE" ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePause("campaign", campaign.id);
+                            }}
+                            className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition-colors"
+                            title="Pause Campaign"
+                          >
+                            <FiPause className="w-5 h-5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleActivate("campaign", campaign.id);
+                            }}
+                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition-colors"
+                            title="Activate Campaign"
+                          >
+                            <FiPlay className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete("campaign", campaign.id);
+                          }}
+                          className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                          title="Delete Campaign"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => handleCampaignClick(campaign)}
+                      >
+                        <span className="text-sm text-gray-500">View AdSets</span>
+                        <FiChevronRight className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => fetchCampaigns(true)}
+                  disabled={loadingMore}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <span>Load More Campaigns</span>
+                  )}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -344,11 +474,13 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
             {adSets.map((adSet) => (
               <div
                 key={adSet.id}
-                className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleAdSetClick(adSet)}
+                className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex-1">
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => handleAdSetClick(adSet)}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <h4 className="font-semibold text-gray-900">{adSet.name || adSet.id}</h4>
                       <span
@@ -364,12 +496,57 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                       {adSet.daily_budget && (
                         <span>Budget: ${(adSet.daily_budget / 100).toFixed(2)}/day</span>
                       )}
+                      {adSet.optimization_goal && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                          {getOptimizationGoalName(adSet.optimization_goal)}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">View Ads</span>
-                    <FiChevronRight className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center gap-2 mr-2">
+                      {adSet.status === "ACTIVE" ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePause("adset", adSet.id);
+                          }}
+                          className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition-colors"
+                          title="Pause AdSet"
+                        >
+                          <FiPause className="w-5 h-5" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleActivate("adset", adSet.id);
+                          }}
+                          className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition-colors"
+                          title="Activate AdSet"
+                        >
+                          <FiPlay className="w-5 h-5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete("adset", adSet.id);
+                        }}
+                        className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                        title="Delete AdSet"
+                      >
+                        <FiTrash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => handleAdSetClick(adSet)}
+                    >
+                      <span className="text-sm text-gray-500">View Ads</span>
+                      <FiChevronRight className="w-5 h-5 text-gray-400" />
+                    </div>
                   </div>
                 </div>
               </div>
