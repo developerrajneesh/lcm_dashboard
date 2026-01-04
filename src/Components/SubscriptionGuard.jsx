@@ -27,12 +27,28 @@ const SubscriptionGuard = ({
   // Check if specific feature access is required
   if (requiredFeature && !hasFeatureAccess(subscription, requiredFeature)) {
     const planName = subscription?.planName || "No Plan";
-    const isPremiumFeature = requiredFeature === "sms-marketing" || requiredFeature === "ivr-campaign";
+    const planId = subscription?.planId;
+    
+    // Premium-only features: meta-ads, whatsapp-marketing, ivr-campaign, priority-support
+    // Basic features: email-marketing, sms-marketing, creative-workshop, basic-support
+    // Note: Premium Plan includes all Basic features
+    const isPremiumOnlyFeature = requiredFeature === "meta-ads" || 
+                                  requiredFeature === "whatsapp-marketing" || 
+                                  requiredFeature === "ivr-campaign" ||
+                                  requiredFeature === "priority-support";
+    
+    let message = `This feature is not available in your current plan. Your current plan: ${planName}`;
+    if (isPremiumOnlyFeature) {
+      message = `This feature is only available in Premium Plan. Upgrade to unlock Meta Ads, WhatsApp Marketing, IVR Campaigns, and more.`;
+    } else if (planId === 2) {
+      // Premium user trying to access a feature they should have
+      message = `This feature should be available in your Premium Plan. Please contact support if you're seeing this error.`;
+    }
     
     return (
       <UpgradePrompt 
-        message={`This feature is only available in Premium Plan. Your current plan: ${planName}`}
-        isPremiumFeature={isPremiumFeature}
+        message={message}
+        isPremiumFeature={isPremiumOnlyFeature}
       />
     );
   }

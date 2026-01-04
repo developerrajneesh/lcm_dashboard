@@ -65,9 +65,8 @@ const MarketingPage = () => {
       icon: FiMessageSquare,
       color: "#8E44AD",
       link: "/user/sms-marketing",
-      comingSoon: false,
+      comingSoon: true,
       requiredFeature: "sms-marketing",
-      isPremium: true,
     },
     {
       id: 6,
@@ -90,18 +89,8 @@ const MarketingPage = () => {
       return;
     }
 
-    // Check subscription for premium features
-    if (option.isPremium && option.requiredFeature) {
-      const hasAccess = hasFeatureAccess(subscription, option.requiredFeature);
-      if (!hasAccess) {
-        e.preventDefault();
-        setShowUpgradeModal(true);
-        return;
-      }
-    }
-
-    // Check subscription for basic features
-    if (option.requiredFeature && !option.isPremium) {
+    // Check subscription for all features
+    if (option.requiredFeature) {
       const hasAccess = hasFeatureAccess(subscription, option.requiredFeature);
       if (!hasAccess) {
         e.preventDefault();
@@ -155,7 +144,7 @@ const MarketingPage = () => {
               {isLocked && (
                 <div className="absolute top-4 right-4 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
                   <FiLock className="w-3 h-3" />
-                  {option.isPremium ? "Premium" : "Locked"}
+                  Locked
                 </div>
               )}
               <div className="flex items-center gap-4 mb-4">
@@ -201,10 +190,11 @@ const MarketingPage = () => {
                 Feature Locked
               </h2>
               <p className="text-gray-600 mb-4">
-                This feature requires a Premium Plan subscription.
+                This feature is not available in your current plan.
               </p>
               <p className="text-sm text-gray-500 mb-6">
-                Upgrade to Premium Plan to unlock SMS Marketing, IVR Campaigns, and 24x7 Priority Support.
+                Premium Plan includes: Meta Marketing, WhatsApp Marketing, and IVR Marketing.<br/>
+                Basic Plan includes: Email Marketing, SMS Marketing, and Creative Access.
               </p>
               <div className="flex gap-3">
                 <button
@@ -267,9 +257,61 @@ const MarketingPage = () => {
           new audiences, IVR provides automated customer engagement, WhatsApp Marketing enables direct customer communication, Email Marketing excels at nurturing existing customers, and
           SMS Marketing provides instant engagement.
         </p>
-        <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-          Contact our experts →
-        </button>
+        
+        {/* Contact Information */}
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap gap-4">
+            {/* WhatsApp Numbers */}
+            <div className="flex items-center gap-2">
+              <FaWhatsapp className="w-5 h-5 text-green-600" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-600">WhatsApp</span>
+                <div className="flex gap-2">
+                  <a 
+                    href={`https://wa.me/918882921155`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    +91 8882921155
+                  </a>
+                  <span className="text-gray-400">|</span>
+                  <a 
+                    href={`https://wa.me/918506003018`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    +91 8506003018
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            {/* Email Addresses */}
+            <div className="flex items-center gap-2">
+              <FiMail className="w-5 h-5 text-red-600" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-600">Email</span>
+                <div className="flex gap-2">
+                  <a 
+                    href="mailto:info@leadscraftmarketing.com"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    info@leadscraftmarketing.com
+                  </a>
+                  <span className="text-gray-400">|</span>
+                  <a 
+                    href="mailto:support@leadscraftmarketing.com"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    support@leadscraftmarketing.com
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

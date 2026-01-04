@@ -44,7 +44,7 @@ const UserRoutes = () => {
                 <Route 
                   path="/marketing" 
                   element={
-                    <SubscriptionGuard requiredFeature="whatsapp-marketing" requireActiveSubscription={true}>
+                    <SubscriptionGuard requireActiveSubscription={true}>
                       <MarketingPage />
                     </SubscriptionGuard>
                   } 

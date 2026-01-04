@@ -146,9 +146,8 @@ const LandingPage = () => {
       discount: 50,
       period: "month",
       features: [
-        "Meta Ads",
-        "WhatsApp Marketing",
         "Email Marketing",
+        "SMS Marketing",
         "Premium Festival Creatives",
         "Basic Customer Support",
       ],
@@ -167,7 +166,8 @@ const LandingPage = () => {
         "Email Marketing",
         "SMS Marketing",
         "IVR Voice Campaign",
-        "24x7 Priority Support",
+        "1k IVR Free Credits",
+        "24x7 Priority Support (Live Chat)",
         "Premium Festival Creatives",
       ],
       popular: true,
@@ -533,7 +533,7 @@ const LandingPage = () => {
                     to="/signup"
                     className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl transition transform hover:scale-105 text-center"
                   >
-                    Start Free Trial
+                    Get Started
                   </Link>
                 )}
                 <a
@@ -1569,7 +1569,7 @@ const LandingPage = () => {
                 to="/signup"
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl transition transform hover:scale-105"
               >
-                Start Your Free Trial
+                Get Started
               </Link>
             )}
             <a

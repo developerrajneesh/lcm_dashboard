@@ -18,7 +18,7 @@ const UserSidebar = ({ sidebarOpen, toggleSidebar }) => {
     { path: "/user/creative-workshop", icon: FiImage, label: "Creative Workshop" },
     { path: "/user/subscription", icon: FiCreditCard, label: "Subscription" },
     { path: "/user/referral", icon: FiGift, label: "Referral" },
-    { path: "/user/chat-support", icon: FiMessageCircle, label: "Chat Support" },
+    { path: "/user/chat-support", icon: FiMessageCircle, label: "Live Chat Support" },
     { path: "/user/settings", icon: FiSettings, label: "Settings" },
   ];
 

@@ -11,6 +11,7 @@ import {
   FiMessageCircle,
   FiPhone,
   FiVideo,
+  FiCreditCard,
 } from "react-icons/fi";
 
 const AdminSidebar = ({ sidebarOpen, toggleSidebar }) => {
@@ -22,6 +23,7 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar }) => {
     { path: "/admin/category-management", icon: FiTag, label: "Category Management" },
     { path: "/admin/chat-support", icon: FiMessageCircle, label: "Chat Support" },
     { path: "/admin/ivr-requests", icon: FiPhone, label: "IVR Requests" },
+    { path: "/admin/ivr-credits", icon: FiCreditCard, label: "IVR Credits" },
     { path: "/admin/ugc-requests", icon: FiVideo, label: "UGC Requests" },
     { path: "/admin/settings", icon: FiSettings, label: "Settings" },
   ];

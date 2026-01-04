@@ -3,9 +3,8 @@ export const PLAN_FEATURES = {
   1: { // BASIC PLAN
     name: "BASIC PLAN",
     features: [
-      "meta-ads",
-      "whatsapp-marketing",
       "email-marketing",
+      "sms-marketing",
       "creative-workshop",
       "basic-support",
     ],

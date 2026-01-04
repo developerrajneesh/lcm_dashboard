@@ -166,7 +166,7 @@ const ReferralPage = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Referral Program</h1>
-          <p className="text-gray-600 mt-1">Earn ₹50 when your referral makes their first payment</p>
+          <p className="text-gray-600 mt-1">Earn ₹101 when your referral makes their first payment</p>
         </div>
 
         {/* Stats Cards */}
@@ -200,7 +200,7 @@ const ReferralPage = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Potential Earnings</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  ₹{(referrals.length * 50).toFixed(2)}
+                  ₹{(referrals.length * 101).toFixed(2)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -289,9 +289,9 @@ const ReferralPage = () => {
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-purple-600">3</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">You Earn ₹50</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">You Earn ₹101</h3>
               <p className="text-sm text-gray-600">
-                ₹50 is automatically credited to your wallet when they make their first payment
+                ₹101 is automatically credited to your wallet when they make their first payment
               </p>
             </div>
           </div>

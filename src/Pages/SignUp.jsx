@@ -199,13 +199,6 @@ const SignUp = () => {
           </p>
           <div className="signup-benefits">
             <div className="benefit-item">
-              <div className="benefit-icon">✨</div>
-              <div>
-                <h3>Free Trial</h3>
-                <p>14 days free, no credit card required</p>
-              </div>
-            </div>
-            <div className="benefit-item">
               <div className="benefit-icon">🚀</div>
               <div>
                 <h3>Quick Setup</h3>
@@ -217,6 +210,27 @@ const SignUp = () => {
               <div>
                 <h3>All Features</h3>
                 <p>Access to all marketing channels</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">📊</div>
+              <div>
+                <h3>Analytics Dashboard</h3>
+                <p>Track performance with real-time insights</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">🔒</div>
+              <div>
+                <h3>Secure Platform</h3>
+                <p>Your data is safe and encrypted</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">💬</div>
+              <div>
+                <h3>24/7 Support</h3>
+                <p>Get help whenever you need it</p>
               </div>
             </div>
           </div>
@@ -388,7 +402,7 @@ const SignUp = () => {
                 className="form-input"
               />
               <small className="form-hint">
-                Enter a referral code to help someone earn ₹50
+                Enter a referral code to help someone earn ₹101
               </small>
             </div>
 

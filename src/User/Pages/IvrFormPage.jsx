@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPhone, FiUser, FiMail, FiPhoneCall, FiBriefcase, FiMapPin, FiCheckCircle, FiClock, FiX } from "react-icons/fi";
+import { FiPhone, FiUser, FiMail, FiPhoneCall, FiBriefcase, FiMapPin, FiCheckCircle, FiClock, FiX, FiCreditCard, FiDollarSign } from "react-icons/fi";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const API_BASE_URL = `${BACKEND_URL}/api/v1`;
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
 
 const IvrFormPage = () => {
   const navigate = useNavigate();
@@ -12,6 +13,9 @@ const IvrFormPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [existingRequest, setExistingRequest] = useState(null);
+  const [showCreditsOffCanvas, setShowCreditsOffCanvas] = useState(false);
+  const [creditsAmount, setCreditsAmount] = useState("");
+  const [creditsLoading, setCreditsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -22,6 +26,7 @@ const IvrFormPage = () => {
     companyName: "",
     businessType: "",
     state: "",
+    ivrType: "",
   });
   const [user, setUser] = useState(null);
 
@@ -40,6 +45,19 @@ const IvrFormPage = () => {
     } else {
       setCheckingStatus(false);
     }
+
+    // Load Razorpay script
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existingScript) {
+        document.body.removeChild(existingScript);
+      }
+    };
   }, []);
 
   // Re-check when user navigates back to this page
@@ -127,7 +145,7 @@ const IvrFormPage = () => {
     // Validation
     if (!formData.fullName || !formData.mobileNumber || !formData.emailId || 
         !formData.userId || !formData.password || !formData.companyName || 
-        !formData.state) {
+        !formData.state || !formData.ivrType) {
       setError("Please fill all required fields");
       setLoading(false);
       return;
@@ -187,6 +205,7 @@ const IvrFormPage = () => {
           companyName: "",
           businessType: "",
           state: "",
+          ivrType: "",
         });
         setError("");
         setSuccess(false);
@@ -198,6 +217,134 @@ const IvrFormPage = () => {
       console.error("Error submitting IVR request:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBuyCredits = async () => {
+    if (!creditsAmount || parseInt(creditsAmount) < 5000) {
+      setError("Minimum 5000 credits required");
+      return;
+    }
+
+    if (!existingRequest || !existingRequest.ivrType) {
+      setError("IVR Type not found. Please contact support.");
+      return;
+    }
+
+    if (!window.Razorpay) {
+      setError("Payment gateway not loaded. Please refresh the page.");
+      return;
+    }
+
+    setCreditsLoading(true);
+    setError("");
+
+    try {
+      const userData = localStorage.getItem("user");
+      const currentUser = userData ? JSON.parse(userData) : null;
+      const authToken = localStorage.getItem("authToken");
+
+      const ivrType = existingRequest.ivrType || "15s";
+      const pricePerCredit = ivrType === "30s" ? 0.24 : 0.15;
+      const totalAmount = pricePerCredit * parseInt(creditsAmount);
+
+      // Create order on backend
+      const config = {};
+      if (authToken) {
+        config.headers = {
+          Authorization: `Bearer ${authToken}`,
+        };
+      }
+
+      const orderResponse = await fetch(`${API_BASE_URL}/ivr-credits/create-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": currentUser?.id || "",
+          ...(config.headers || {}),
+        },
+        body: JSON.stringify({
+          amount: totalAmount,
+          credits: parseInt(creditsAmount),
+          ivrType: ivrType,
+          ivrRequestId: existingRequest._id,
+        }),
+      });
+
+      const orderResult = await orderResponse.json();
+
+      if (!orderResult.success) {
+        throw new Error(orderResult.error || "Failed to create order");
+      }
+
+      const { order, keyId } = orderResult;
+
+      // Initialize Razorpay checkout
+      const options = {
+        key: keyId || RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "LCM",
+        description: `IVR Credits - ${creditsAmount} credits (${ivrType})`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await fetch(`${API_BASE_URL}/ivr-credits/verify-payment`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "user-id": currentUser?.id || "",
+                ...(config.headers || {}),
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                credits: parseInt(creditsAmount),
+                ivrType: ivrType,
+                ivrRequestId: existingRequest._id,
+                amount: totalAmount,
+              }),
+            });
+
+            const verifyResult = await verifyResponse.json();
+
+            if (verifyResult.success) {
+              alert("Payment successful! Credits have been added to your account.");
+              setShowCreditsOffCanvas(false);
+              setCreditsAmount("");
+              setError("");
+            } else {
+              setError(verifyResult.error || "Payment verification failed");
+            }
+          } catch (err) {
+            console.error("Payment verification error:", err);
+            setError("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: currentUser?.name || "",
+          email: currentUser?.email || "",
+          contact: currentUser?.phoneNumber || "",
+        },
+        theme: {
+          color: "#6366f1",
+        },
+        modal: {
+          ondismiss: function () {
+            setCreditsLoading(false);
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      setCreditsLoading(false);
+    } catch (err) {
+      console.error("Error processing payment:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setCreditsLoading(false);
     }
   };
 
@@ -328,18 +475,130 @@ const IvrFormPage = () => {
             </div>
           </div>
 
-          <div className="text-center">
+          <div className="text-center flex gap-4 justify-center">
             <button
               onClick={() => {
                 window.location.href = "https://voice.whatsupninja.in/";
               }}
-              className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 mx-auto"
+              className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
             >
               <FiPhone className="w-5 h-5" />
               Go to IVR
             </button>
+            <button
+              onClick={() => setShowCreditsOffCanvas(true)}
+              className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <FiCreditCard className="w-5 h-5" />
+              Buy IVR Credits
+            </button>
           </div>
         </div>
+
+        {/* Buy Credits Off-Canvas */}
+        {showCreditsOffCanvas && (
+          <div className="fixed inset-0 z-50 overflow-hidden">
+            <div 
+              className="absolute inset-0 bg-black bg-opacity-50" 
+              onClick={() => {
+                setShowCreditsOffCanvas(false);
+                setError("");
+                setCreditsAmount("");
+              }}
+            ></div>
+            <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <h2 className="text-2xl font-bold text-gray-900">Buy IVR Credits</h2>
+                  <button
+                    onClick={() => {
+                      setShowCreditsOffCanvas(false);
+                      setError("");
+                      setCreditsAmount("");
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <FiX className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Enter Credits Amount <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="5000"
+                      value={creditsAmount}
+                      onChange={(e) => setCreditsAmount(e.target.value)}
+                      placeholder="Minimum 5000 credits"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Minimum: 5000 credits</p>
+                  </div>
+
+                  {creditsAmount && parseInt(creditsAmount) >= 5000 && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">IVR Type:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {existingRequest?.ivrType || "15s"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Price per Credit:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            ₹{existingRequest?.ivrType === "30s" ? "0.24" : "0.15"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Total Credits:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {parseInt(creditsAmount).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="border-t border-gray-200 pt-2 mt-2">
+                          <div className="flex justify-between">
+                            <span className="text-base font-semibold text-gray-900">Total Amount:</span>
+                            <span className="text-lg font-bold text-indigo-600">
+                              ₹{((existingRequest?.ivrType === "30s" ? 0.24 : 0.15) * parseInt(creditsAmount)).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-800 text-sm">{error}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="p-6 border-t border-gray-200">
+                  <button
+                    onClick={handleBuyCredits}
+                    disabled={!creditsAmount || parseInt(creditsAmount) < 5000 || creditsLoading}
+                    className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {creditsLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <FiDollarSign className="w-5 h-5" />
+                        Proceed to Payment
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -391,6 +650,7 @@ const IvrFormPage = () => {
                   companyName: "",
                   businessType: "",
                   state: "",
+                  ivrType: "",
                 });
                 setError("");
               }}
@@ -580,6 +840,22 @@ const IvrFormPage = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                IVR Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="ivrType"
+                value={formData.ivrType}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select IVR Type</option>
+                <option value="15s">15s</option>
+                <option value="30s">30s</option>
+              </select>
             </div>
           </div>
         </div>

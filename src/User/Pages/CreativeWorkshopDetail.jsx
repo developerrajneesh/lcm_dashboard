@@ -417,7 +417,7 @@ const CreativeWorkshopDetail = () => {
           onClick={handleDownloadAll}
           disabled={downloading}
         >
-          {downloading ? "Downloading..." : <><FiDownload /> Download All</>}
+          {downloading ? "Downloading..." : <><FiDownload /> Download</>}
         </button>
       </div>
 
@@ -551,19 +551,6 @@ const CreativeWorkshopDetail = () => {
                           </div>
                         );
                       })}
-                  </div>
-
-                  <div className="image-actions">
-                    <p className="image-info">
-                      Image {imageIndex + 1} • {imageData.texts?.length || 0} text overlay(s)
-                    </p>
-                    <button
-                      className="download-button"
-                      onClick={() => handleDownload(imageIndex)}
-                      disabled={downloading}
-                    >
-                      <FiDownload /> Download
-                    </button>
                   </div>
                 </div>
               );

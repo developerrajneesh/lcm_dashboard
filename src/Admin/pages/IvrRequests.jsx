@@ -192,6 +192,9 @@ const IvrRequests = () => {
                       Company
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      IVR Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       User ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -238,6 +241,17 @@ const IvrRequests = () => {
                         {request.businessType && (
                           <div className="text-sm text-gray-500">{request.businessType}</div>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.ivrType ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                              {request.ivrType}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{request.accountUserId || (typeof request.userId === 'string' ? request.userId : 'N/A')}</div>
@@ -334,6 +348,18 @@ const IvrRequests = () => {
                       <div>
                         <label className="block text-sm font-medium text-gray-700">State</label>
                         <p className="mt-1 text-sm text-gray-900">{selectedRequest.state}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">IVR Type</label>
+                        <p className="mt-1">
+                          {selectedRequest.ivrType ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                              {selectedRequest.ivrType}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-500">Not specified</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>
