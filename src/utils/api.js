@@ -82,6 +82,8 @@ export const campaignAPI = {
   activate: (campaignId) => api.post(`/campaigns/${campaignId}/activate`),
   delete: (campaignId) => api.delete(`/campaigns/${campaignId}`),
   getAdAccounts: () => api.get("/campaigns"),
+  getAdAccountDetails: (adAccountId) => api.get(`/campaigns/account/${adAccountId}`),
+  getAdAccountFunds: (adAccountId) => api.get(`/campaigns/account/${adAccountId}/funds`),
 };
 
 // AdSet API

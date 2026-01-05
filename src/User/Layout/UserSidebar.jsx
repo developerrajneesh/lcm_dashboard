@@ -9,12 +9,14 @@ import {
   FiCreditCard,
   FiMessageCircle,
   FiGift,
+  FiLayers,
 } from "react-icons/fi";
 
 const UserSidebar = ({ sidebarOpen, toggleSidebar }) => {
   const menuItems = [
     { path: "/user", icon: FiHome, label: "Dashboard" },
     { path: "/user/marketing", icon: FiTrendingUp, label: "Marketing" },
+    { path: "/user/meta-management", icon: FiLayers, label: "Meta Management" },
     { path: "/user/creative-workshop", icon: FiImage, label: "Creative Workshop" },
     { path: "/user/subscription", icon: FiCreditCard, label: "Subscription" },
     { path: "/user/referral", icon: FiGift, label: "Referral" },

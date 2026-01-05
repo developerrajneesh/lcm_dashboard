@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiMoreVertical, FiPlay, FiPause, FiTrash2, FiEdit, FiChevronRight, FiArrowLeft, FiX, FiPlus } from "react-icons/fi";
+import { FiPlay, FiPause, FiTrash2, FiEdit, FiChevronRight, FiArrowLeft, FiX, FiPlus } from "react-icons/fi";
 import { campaignAPI, adsetAPI, adAPI } from "../../utils/api";
 
 const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampaign, onCreateAd }) => {
@@ -16,7 +16,6 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [nextCursor, setNextCursor] = useState(null);
-  const [actionMenu, setActionMenu] = useState(null);
 
   useEffect(() => {
     if (adAccountId) {
@@ -303,42 +302,64 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
           </div>
         ) : (
           <>
-            <div className="space-y-3">
-              {campaigns.map((campaign) => (
+            <div className="grid grid-cols-2 gap-4">
+              {campaigns.map((campaign, index) => {
+                // Colorful gradient backgrounds
+                const gradients = [
+                  { from: "#9333EA", to: "#EC4899" }, // purple to pink
+                  { from: "#3B82F6", to: "#06B6D4" }, // blue to cyan
+                  { from: "#10B981", to: "#059669" }, // green to emerald
+                  { from: "#F97316", to: "#EF4444" }, // orange to red
+                  { from: "#6366F1", to: "#9333EA" }, // indigo to purple
+                  { from: "#14B8A6", to: "#3B82F6" }, // teal to blue
+                  { from: "#EAB308", to: "#F97316" }, // yellow to orange
+                  { from: "#EC4899", to: "#F43F5E" }, // pink to rose
+                ];
+                const gradient = gradients[index % gradients.length];
+                
+                return (
                 <div
                   key={campaign.id}
-                  className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                  className="rounded-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${gradient.from}, ${gradient.to})`
+                  }}
+                  onClick={() => handleCampaignClick(campaign)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex-1 cursor-pointer"
-                      onClick={() => handleCampaignClick(campaign)}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-gray-900">{campaign.name}</h4>
+                  {/* Decorative circles */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-white text-lg mb-2 line-clamp-2">{campaign.name}</h4>
+                        <p className="text-white text-sm opacity-90 mb-1">Objective: {campaign.objective || "N/A"}</p>
+                        <p className="text-white text-xs opacity-75">ID: {campaign.id}</p>
+                      </div>
+                      <div className="ml-4">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            campaign.status
-                          )}`}
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            campaign.status === "ACTIVE"
+                              ? "bg-green-200 text-green-900"
+                              : campaign.status === "PAUSED"
+                              ? "bg-yellow-200 text-yellow-900"
+                              : "bg-gray-200 text-gray-900"
+                          }`}
                         >
                           {campaign.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>Objective: {campaign.objective || "N/A"}</span>
-                        <span>ID: {campaign.id}</span>
-                      </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 mr-2">
+                    
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white border-opacity-20">
+                      <div className="flex items-center gap-2">
                         {campaign.status === "ACTIVE" ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePause("campaign", campaign.id);
                             }}
-                            className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition-colors"
+                            className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-yellow-600 shadow-md transition-all hover:scale-110"
                             title="Pause Campaign"
                           >
                             <FiPause className="w-5 h-5" />
@@ -349,7 +370,7 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                               e.stopPropagation();
                               handleActivate("campaign", campaign.id);
                             }}
-                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition-colors"
+                            className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-green-600 shadow-md transition-all hover:scale-110"
                             title="Activate Campaign"
                           >
                             <FiPlay className="w-5 h-5" />
@@ -360,23 +381,21 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                             e.stopPropagation();
                             handleDelete("campaign", campaign.id);
                           }}
-                          className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                          className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-red-600 shadow-md transition-all hover:scale-110"
                           title="Delete Campaign"
                         >
                           <FiTrash2 className="w-5 h-5" />
                         </button>
                       </div>
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer"
-                        onClick={() => handleCampaignClick(campaign)}
-                      >
-                        <span className="text-sm text-gray-500">View AdSets</span>
-                        <FiChevronRight className="w-5 h-5 text-gray-400" />
+                      <div className="flex items-center gap-2 text-white">
+                        <span className="text-sm font-medium">View AdSets</span>
+                        <FiChevronRight className="w-5 h-5" />
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
             
             {/* Load More Button */}
@@ -470,49 +489,71 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {adSets.map((adSet) => (
+          <div className="grid grid-cols-2 gap-4">
+            {adSets.map((adSet, index) => {
+              // Colorful gradient backgrounds
+              const gradients = [
+                { from: "#9333EA", to: "#EC4899" }, // purple to pink
+                { from: "#3B82F6", to: "#06B6D4" }, // blue to cyan
+                { from: "#10B981", to: "#059669" }, // green to emerald
+                { from: "#F97316", to: "#EF4444" }, // orange to red
+                { from: "#6366F1", to: "#9333EA" }, // indigo to purple
+                { from: "#14B8A6", to: "#3B82F6" }, // teal to blue
+                { from: "#EAB308", to: "#F97316" }, // yellow to orange
+                { from: "#EC4899", to: "#F43F5E" }, // pink to rose
+              ];
+              const gradient = gradients[index % gradients.length];
+              
+              return (
               <div
                 key={adSet.id}
-                className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                className="rounded-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(to bottom right, ${gradient.from}, ${gradient.to})`
+                }}
+                onClick={() => handleAdSetClick(adSet)}
               >
-                <div className="flex items-center justify-between">
-                  <div 
-                    className="flex-1 cursor-pointer"
-                    onClick={() => handleAdSetClick(adSet)}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-gray-900">{adSet.name || adSet.id}</h4>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          adSet.status
-                        )}`}
-                      >
-                        {adSet.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>ID: {adSet.id}</span>
+                {/* Decorative circles */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-white text-lg mb-2 line-clamp-2">{adSet.name || adSet.id}</h4>
+                      <p className="text-white text-sm opacity-90 mb-1">ID: {adSet.id}</p>
                       {adSet.daily_budget && (
-                        <span>Budget: ${(adSet.daily_budget / 100).toFixed(2)}/day</span>
+                        <p className="text-white text-sm opacity-90 mb-1">Budget: ${(adSet.daily_budget / 100).toFixed(2)}/day</p>
                       )}
                       {adSet.optimization_goal && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                        <span className="inline-block px-2 py-1 bg-red-500 bg-opacity-100 text-white rounded text-xs font-medium mt-1">
                           {getOptimizationGoalName(adSet.optimization_goal)}
                         </span>
                       )}
                     </div>
+                    <div className="ml-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          adSet.status === "ACTIVE"
+                            ? "bg-green-200 text-green-900"
+                            : adSet.status === "PAUSED"
+                            ? "bg-yellow-200 text-yellow-900"
+                            : "bg-gray-200 text-gray-900"
+                        }`}
+                      >
+                        {adSet.status}
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 mr-2">
+                  
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-white border-opacity-20">
+                    <div className="flex items-center gap-2">
                       {adSet.status === "ACTIVE" ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handlePause("adset", adSet.id);
                           }}
-                          className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition-colors"
+                          className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-yellow-600 shadow-md transition-all hover:scale-110"
                           title="Pause AdSet"
                         >
                           <FiPause className="w-5 h-5" />
@@ -523,7 +564,7 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                             e.stopPropagation();
                             handleActivate("adset", adSet.id);
                           }}
-                          className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition-colors"
+                          className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-green-600 shadow-md transition-all hover:scale-110"
                           title="Activate AdSet"
                         >
                           <FiPlay className="w-5 h-5" />
@@ -534,23 +575,21 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                           e.stopPropagation();
                           handleDelete("adset", adSet.id);
                         }}
-                        className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                        className="p-2.5 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 text-red-600 shadow-md transition-all hover:scale-110"
                         title="Delete AdSet"
                       >
                         <FiTrash2 className="w-5 h-5" />
                       </button>
                     </div>
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => handleAdSetClick(adSet)}
-                    >
-                      <span className="text-sm text-gray-500">View Ads</span>
-                      <FiChevronRight className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center gap-2 text-white">
+                      <span className="text-sm font-medium">View Ads</span>
+                      <FiChevronRight className="w-5 h-5" />
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
@@ -631,8 +670,8 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {ads.map((ad) => {
+          <div className="grid grid-cols-2 gap-4">
+            {ads.map((ad, index) => {
               const insights = adInsights[ad.id];
               const formatNumber = (num) => {
                 if (!num || num === "0") return "0";
@@ -647,144 +686,129 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                 return `${parseFloat(value).toFixed(2)}%`;
               };
 
+              // Colorful gradient backgrounds
+              const gradients = [
+                { from: "#9333EA", to: "#EC4899" }, // purple to pink
+                { from: "#3B82F6", to: "#06B6D4" }, // blue to cyan
+                { from: "#10B981", to: "#059669" }, // green to emerald
+                { from: "#F97316", to: "#EF4444" }, // orange to red
+                { from: "#6366F1", to: "#9333EA" }, // indigo to purple
+                { from: "#14B8A6", to: "#3B82F6" }, // teal to blue
+                { from: "#EAB308", to: "#F97316" }, // yellow to orange
+                { from: "#EC4899", to: "#F43F5E" }, // pink to rose
+              ];
+              const gradient = gradients[index % gradients.length];
+
               return (
                 <div
                   key={ad.id}
-                  className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                  className="rounded-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${gradient.from}, ${gradient.to})`
+                  }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-gray-900">{ad.name || ad.id}</h4>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            ad.status
-                          )}`}
-                        >
-                          {ad.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                        <span>ID: {ad.id}</span>
+                  {/* Decorative circles */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-white text-lg mb-2 line-clamp-2">{ad.name || ad.id}</h4>
+                        <p className="text-white text-sm opacity-90 mb-1">ID: {ad.id}</p>
                         {ad.effective_status && (
-                          <span>Effective Status: {ad.effective_status}</span>
+                          <p className="text-white text-xs opacity-75">Status: {ad.effective_status}</p>
                         )}
                       </div>
 
-                      {/* Analytics Section */}
-                      {insights ? (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <h5 className="text-sm font-semibold text-gray-900 mb-3">Analytics (Last 30 Days)</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">Impressions</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatNumber(insights.impressions)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">Clicks</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatNumber(insights.clicks)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">CTR</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {insights.ctr ? formatPercent(insights.ctr) : "0%"}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">Spend</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatCurrency(insights.spend)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">Reach</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatNumber(insights.reach)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">CPC</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {insights.cpc ? formatCurrency(insights.cpc) : "₹0.00"}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">CPM</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {insights.cpm ? formatCurrency(insights.cpm) : "₹0.00"}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-600 mb-1">Frequency</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {insights.frequency ? parseFloat(insights.frequency).toFixed(2) : "0.00"}
-                              </p>
-                            </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            ad.status === "ACTIVE"
+                              ? "bg-green-200 text-green-900"
+                              : ad.status === "PAUSED"
+                              ? "bg-yellow-200 text-yellow-900"
+                              : "bg-gray-200 text-gray-900"
+                          }`}
+                        >
+                          {ad.status}
+                        </span>
+                        {ad.status === "ACTIVE" ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePause("ad", ad.id);
+                            }}
+                            className="p-2.5 rounded-lg bg-white hover:bg-gray-100 text-yellow-600 shadow-md transition-all hover:scale-110"
+                            title="Pause Ad"
+                          >
+                            <FiPause className="w-5 h-5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleActivate("ad", ad.id);
+                            }}
+                            className="p-2.5 rounded-lg bg-white hover:bg-gray-100 text-green-600 shadow-md transition-all hover:scale-110"
+                            title="Activate Ad"
+                          >
+                            <FiPlay className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete("ad", ad.id);
+                          }}
+                          className="p-2.5 rounded-lg bg-white hover:bg-gray-100 text-red-600 shadow-md transition-all hover:scale-110"
+                          title="Delete Ad"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Analytics Section */}
+                    {insights ? (
+                      <div className="mt-4 pt-4 border-t border-white border-opacity-20">
+                        <h5 className="text-sm font-bold text-white mb-3">Analytics (Last 30 Days)</h5>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
+                            <p className="text-xs text-white opacity-90 mb-1">Impressions</p>
+                            <p className="text-sm font-bold text-white">
+                              {formatNumber(insights.impressions)}
+                            </p>
+                          </div>
+                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
+                            <p className="text-xs text-white opacity-90 mb-1">Clicks</p>
+                            <p className="text-sm font-bold text-white">
+                              {formatNumber(insights.clicks)}
+                            </p>
+                          </div>
+                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
+                            <p className="text-xs text-white opacity-90 mb-1">CTR</p>
+                            <p className="text-sm font-bold text-white">
+                              {insights.ctr ? formatPercent(insights.ctr) : "0%"}
+                            </p>
+                          </div>
+                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
+                            <p className="text-xs text-white opacity-90 mb-1">Spend</p>
+                            <p className="text-sm font-bold text-white">
+                              {formatCurrency(insights.spend)}
+                            </p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <p className="text-xs text-gray-500 italic">Analytics data loading or not available</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative ml-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionMenu(actionMenu === ad.id ? null : ad.id);
-                        }}
-                        className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        <FiMoreVertical className="w-5 h-5 text-gray-600" />
-                      </button>
-
-                      {actionMenu === ad.id && (
-                        <div className="absolute right-0 top-10 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10 min-w-[150px]">
-                          {ad.status === "ACTIVE" ? (
-                            <button
-                              onClick={() => handlePause("ad", ad.id)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <FiPause className="w-4 h-4" />
-                              Pause
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleActivate("ad", ad.id)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <FiPlay className="w-4 h-4" />
-                              Activate
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDelete("ad", ad.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4 pt-4 border-t border-white border-opacity-20">
+                        <p className="text-xs text-white opacity-75 italic">Analytics data loading or not available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
-
-        {actionMenu && (
-          <div
-            className="fixed inset-0 z-0"
-            onClick={() => setActionMenu(null)}
-          ></div>
         )}
       </div>
     );
