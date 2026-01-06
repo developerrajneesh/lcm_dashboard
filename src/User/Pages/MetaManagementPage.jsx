@@ -120,6 +120,22 @@ const MetaManagementPage = () => {
       }
     }
     
+    // Check if no accounts were provided (user has no ad accounts)
+    if (!accounts || accounts.length === 0) {
+      console.warn("⚠️ No ad accounts provided - user has no ad accounts");
+      // Clear connection state
+      setAccessToken("");
+      setIsConnected(false);
+      localStorage.removeItem("fb_access_token");
+      localStorage.removeItem("fb_token");
+      localStorage.removeItem("fb_ad_account_id");
+      localStorage.removeItem("act_ad_account_id");
+      setAvailableAccounts([]);
+      setAdAccountId("");
+      // Show message (already shown in ConnectMetaAccount, but ensure state is cleared)
+      return;
+    }
+    
     // ALWAYS fetch accounts from API to ensure we have complete and latest data
     // This will overwrite the temporary accounts from login with full API data
     const accountIdToUse = accountId || localStorage.getItem("fb_ad_account_id") || localStorage.getItem("act_ad_account_id");
@@ -244,6 +260,31 @@ const MetaManagementPage = () => {
         );
         
         console.log(`✅ Filtered ${accounts.length} valid accounts:`, accounts);
+        
+        // Check if no accounts found
+        if (accounts.length === 0) {
+          console.warn("⚠️ No valid ad accounts found");
+          // Clear connection state
+          setAccessToken("");
+          setIsConnected(false);
+          localStorage.removeItem("fb_access_token");
+          localStorage.removeItem("fb_token");
+          localStorage.removeItem("fb_ad_account_id");
+          localStorage.removeItem("act_ad_account_id");
+          setAvailableAccounts([]);
+          setAdAccountId("");
+          alert(
+            "No Ad Account Found\n\n" +
+            "You don't have any Meta ad accounts. Please create an ad account in Meta Business Manager first, then reconnect with LCM.\n\n" +
+            "Steps:\n" +
+            "1. Go to Meta Business Manager (business.facebook.com)\n" +
+            "2. Create an ad account\n" +
+            "3. Come back here and reconnect your Meta account"
+          );
+          setLoadingAccounts(false);
+          return;
+        }
+        
         setAvailableAccounts(accounts);
         
         // If we have a current account ID, make sure it's set in state

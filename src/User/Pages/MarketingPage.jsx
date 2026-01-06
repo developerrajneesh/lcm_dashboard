@@ -20,7 +20,7 @@ const MarketingPage = () => {
         "Reach your target audience with precision targeting and powerful analytics",
       icon: FiFacebook,
       color: "#1877F2",
-      link: "/user/meta-ads",
+      link: "/user/meta-management",
       comingSoon: false,
       requiredFeature: "meta-ads",
     },

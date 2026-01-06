@@ -773,27 +773,27 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                       <div className="mt-4 pt-4 border-t border-white border-opacity-20">
                         <h5 className="text-sm font-bold text-white mb-3">Analytics (Last 30 Days)</h5>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
-                            <p className="text-xs text-white opacity-90 mb-1">Impressions</p>
-                            <p className="text-sm font-bold text-white">
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Impressions</p>
+                            <p className="text-sm font-bold text-gray-900">
                               {formatNumber(insights.impressions)}
                             </p>
                           </div>
-                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
-                            <p className="text-xs text-white opacity-90 mb-1">Clicks</p>
-                            <p className="text-sm font-bold text-white">
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Clicks</p>
+                            <p className="text-sm font-bold text-gray-900">
                               {formatNumber(insights.clicks)}
                             </p>
                           </div>
-                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
-                            <p className="text-xs text-white opacity-90 mb-1">CTR</p>
-                            <p className="text-sm font-bold text-white">
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">CTR</p>
+                            <p className="text-sm font-bold text-gray-900">
                               {insights.ctr ? formatPercent(insights.ctr) : "0%"}
                             </p>
                           </div>
-                          <div className="bg-white bg-opacity-20 rounded-lg p-2">
-                            <p className="text-xs text-white opacity-90 mb-1">Spend</p>
-                            <p className="text-sm font-bold text-white">
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Spend</p>
+                            <p className="text-sm font-bold text-gray-900">
                               {formatCurrency(insights.spend)}
                             </p>
                           </div>
@@ -801,7 +801,25 @@ const MetaAdsManage = ({ accessToken, adAccountId, onCreateAdSet, onCreateCampai
                       </div>
                     ) : (
                       <div className="mt-4 pt-4 border-t border-white border-opacity-20">
-                        <p className="text-xs text-white opacity-75 italic">Analytics data loading or not available</p>
+                        <h5 className="text-sm font-bold text-white mb-3">Analytics (Last 30 Days)</h5>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Impressions</p>
+                            <p className="text-sm font-bold text-gray-900">0</p>
+                          </div>
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Clicks</p>
+                            <p className="text-sm font-bold text-gray-900">0</p>
+                          </div>
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">CTR</p>
+                            <p className="text-sm font-bold text-gray-900">0%</p>
+                          </div>
+                          <div className="bg-green-100 rounded-lg p-2">
+                            <p className="text-xs text-gray-700 opacity-90 mb-1">Spend</p>
+                            <p className="text-sm font-bold text-gray-900">₹0.00</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

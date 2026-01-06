@@ -118,7 +118,19 @@ const ConnectMetaAccount = ({ onSuccess }) => {
                       }
                     } else {
                       console.warn("⚠️ No valid ad accounts found after filtering");
-                      onSuccess(accessToken, null, []);
+                      // Clear the token since user has no ad accounts
+                      localStorage.removeItem("fb_access_token");
+                      localStorage.removeItem("fb_token");
+                      alert(
+                        "No Ad Account Found\n\n" +
+                        "You don't have any Meta ad accounts. Please create an ad account in Meta Business Manager first, then reconnect with LCM.\n\n" +
+                        "Steps:\n" +
+                        "1. Go to Meta Business Manager (business.facebook.com)\n" +
+                        "2. Create an ad account\n" +
+                        "3. Come back here and reconnect your Meta account"
+                      );
+                      // Don't call onSuccess - connection failed
+                      return;
                     }
                   } else {
                     console.warn("⚠️ API response indicates no accounts:", apiResponse.data);
@@ -145,7 +157,19 @@ const ConnectMetaAccount = ({ onSuccess }) => {
                         localStorage.setItem("fb_ad_account_id", accountId);
                         onSuccess(accessToken, accountId, accountsResponse.data);
                       } else {
-                        onSuccess(accessToken, null, []);
+                        // No ad accounts found - clear token and show message
+                        localStorage.removeItem("fb_access_token");
+                        localStorage.removeItem("fb_token");
+                        alert(
+                          "No Ad Account Found\n\n" +
+                          "You don't have any Meta ad accounts. Please create an ad account in Meta Business Manager first, then reconnect with LCM.\n\n" +
+                          "Steps:\n" +
+                          "1. Go to Meta Business Manager (business.facebook.com)\n" +
+                          "2. Create an ad account\n" +
+                          "3. Come back here and reconnect your Meta account"
+                        );
+                        // Don't call onSuccess - connection failed
+                        return;
                       }
                     }
                   );
@@ -158,7 +182,10 @@ const ConnectMetaAccount = ({ onSuccess }) => {
         }
       },
       {
-        scope: "public_profile,email,ads_management,pages_read_engagement,ads_read,business_management,pages_manage_cta,pages_manage_instant_articles,pages_show_list,page_events,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_engagement,pages_manage_posts,pages_messaging_phone_number,pages_messaging,pages_messaging_subscriptions,pages_read_engagement,pages_utility_messaging,read_page_mailboxes,whatsapp_business_manage_events,whatsapp_business_management,whatsapp_business_messaging",
+        // scope: "ads_management", // ✅ ONLY THIS
+        // return_scopes: true
+        // scope: "public_profile,email,",
+        scope: "ads_management,pages_read_engagement,ads_read,business_management,pages_manage_cta,pages_manage_instant_articles,pages_show_list,page_events,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_engagement,pages_manage_posts,pages_messaging_phone_number,pages_messaging,pages_messaging_subscriptions,pages_read_engagement,pages_utility_messaging,read_page_mailboxes,whatsapp_business_manage_events,whatsapp_business_management,whatsapp_business_messaging",
       }
     );
   };

@@ -4,7 +4,6 @@ import UserLayout from "./Layout/UserLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import SubscriptionGuard from "../Components/SubscriptionGuard";
 import UserDashboard from "./Pages/UserDashboard";
-import MetaAdsPage from "./Pages/MetaAdsPage";
 import MarketingPage from "./Pages/MarketingPage";
 import CreativeWorkshopPage from "./Pages/CreativeWorkshopPage";
 import CreativeWorkshopDetail from "./Pages/CreativeWorkshopDetail";
@@ -43,14 +42,6 @@ const UserRoutes = () => {
                   element={
                     <SubscriptionGuard requireActiveSubscription={true}>
                       <UserDashboard />
-                    </SubscriptionGuard>
-                  } 
-                />
-                <Route 
-                  path="/meta-ads" 
-                  element={
-                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
-                      <MetaAdsPage />
                     </SubscriptionGuard>
                   } 
                 />

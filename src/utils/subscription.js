@@ -25,7 +25,7 @@ export const PLAN_FEATURES = {
 
 // Feature to route mapping
 export const FEATURE_ROUTES = {
-  "meta-ads": "/user/meta-ads",
+  "meta-ads": "/user/meta-management",
   "whatsapp-marketing": "/user/marketing",
   "email-marketing": "/user/marketing",
   "sms-marketing": "/user/marketing",
