@@ -27,6 +27,12 @@ import LinkCampaign from "./Pages/MetaManagement/LinkCampaign";
 import LinkAdSet from "./Pages/MetaManagement/LinkAdSet";
 import LinkAdCreative from "./Pages/MetaManagement/LinkAdCreative";
 import LinkLaunch from "./Pages/MetaManagement/LinkLaunch";
+import LeadFormCampaign from "./Pages/MetaManagement/LeadFormCampaign";
+import LeadFormForm from "./Pages/MetaManagement/LeadFormForm";
+import LeadFormAdSet from "./Pages/MetaManagement/LeadFormAdSet";
+import LeadFormAdCreative from "./Pages/MetaManagement/LeadFormAdCreative";
+import LeadFormLaunch from "./Pages/MetaManagement/LeadFormLaunch";
+import SubscribePageWebhooks from "./Pages/MetaManagement/SubscribePageWebhooks";
 
 const UserRoutes = () => {
   return (
@@ -149,6 +155,55 @@ const UserRoutes = () => {
                   element={
                     <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
                       <LinkLaunch />
+                    </SubscriptionGuard>
+                  } 
+                />
+                {/* Click to Lead Form Routes */}
+                <Route 
+                  path="/meta-management/lead-form/campaign" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <LeadFormCampaign />
+                    </SubscriptionGuard>
+                  } 
+                />
+                <Route 
+                  path="/meta-management/lead-form/form" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <LeadFormForm />
+                    </SubscriptionGuard>
+                  } 
+                />
+                <Route 
+                  path="/meta-management/lead-form/adset" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <LeadFormAdSet />
+                    </SubscriptionGuard>
+                  } 
+                />
+                <Route 
+                  path="/meta-management/lead-form/creative" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <LeadFormAdCreative />
+                    </SubscriptionGuard>
+                  } 
+                />
+                <Route 
+                  path="/meta-management/lead-form/launch" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <LeadFormLaunch />
+                    </SubscriptionGuard>
+                  } 
+                />
+                <Route 
+                  path="/meta-management/lead-form/subscribe-webhooks" 
+                  element={
+                    <SubscriptionGuard requiredFeature="meta-ads" requireActiveSubscription={true}>
+                      <SubscribePageWebhooks />
                     </SubscriptionGuard>
                   } 
                 />

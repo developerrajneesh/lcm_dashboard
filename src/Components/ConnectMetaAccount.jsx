@@ -77,6 +77,7 @@ const ConnectMetaAccount = ({ onSuccess }) => {
           
           // Store token immediately
           localStorage.setItem("fb_access_token", accessToken);
+          localStorage.setItem("fb_token", accessToken);
           
           // Get user info
           window.FB.api(
@@ -108,6 +109,7 @@ const ConnectMetaAccount = ({ onSuccess }) => {
                         const accountId = accounts[0].id;
                         console.log("✅ Auto-selecting single account:", accountId);
                         localStorage.setItem("fb_ad_account_id", accountId);
+                        localStorage.setItem("act_ad_account_id", accountId);
                         onSuccess(accessToken, accountId, accounts);
                       } else {
                         // Multiple accounts - let user choose
@@ -159,7 +161,9 @@ const ConnectMetaAccount = ({ onSuccess }) => {
                       } else {
                         // No ad accounts found - clear token and show message
                         localStorage.removeItem("fb_access_token");
+                        localStorage.removeItem("act_ad_account_id");
                         localStorage.removeItem("fb_token");
+                        localStorage.removeItem("act_ad_account_id");
                         alert(
                           "No Ad Account Found\n\n" +
                           "You don't have any Meta ad accounts. Please create an ad account in Meta Business Manager first, then reconnect with LCM.\n\n" +
@@ -185,7 +189,7 @@ const ConnectMetaAccount = ({ onSuccess }) => {
         // scope: "ads_management", // ✅ ONLY THIS
         // return_scopes: true
         // scope: "public_profile,email,",
-        scope: "ads_management,pages_read_engagement,ads_read,business_management,pages_manage_cta,pages_manage_instant_articles,pages_show_list,page_events,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_engagement,pages_manage_posts,pages_messaging_phone_number,pages_messaging,pages_messaging_subscriptions,pages_read_engagement,pages_utility_messaging,read_page_mailboxes,whatsapp_business_manage_events,whatsapp_business_management,whatsapp_business_messaging",
+        scope: "ads_management,pages_read_engagement,ads_read,business_management,pages_manage_cta,pages_manage_instant_articles,pages_show_list,page_events,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_engagement,pages_manage_posts,pages_messaging_phone_number,pages_messaging,pages_messaging_subscriptions,pages_read_engagement,pages_utility_messaging,read_page_mailboxes,whatsapp_business_manage_events,whatsapp_business_management,whatsapp_business_messaging,leads_retrieval",
       }
     );
   };
