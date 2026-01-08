@@ -219,6 +219,32 @@
   align-items: center;
 }
 
+/* Signup Source Cell */
+.signup-source-cell {
+  display: flex;
+  align-items: center;
+}
+
+.signup-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.signup-source-web {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.signup-source-app {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
 /* Actions */
 .actions-cell {
   display: flex;

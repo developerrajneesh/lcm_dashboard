@@ -16,6 +16,8 @@ import {
   FiPhone,
   FiCreditCard,
   FiPlus,
+  FiMonitor,
+  FiSmartphone,
 } from "react-icons/fi";
 import "./UsersList.css";
 
@@ -385,6 +387,7 @@ const UsersList = () => {
                   <th>Role</th>
                   <th>Status</th>
                   <th>Subscription</th>
+                  <th>Signup Source</th>
                   <th>Created At</th>
                   <th>Actions</th>
                 </tr>
@@ -425,6 +428,21 @@ const UsersList = () => {
                       <td>
                         <div className="subscription-cell">
                           {getSubscriptionBadge(user.id || user._id)}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="signup-source-cell">
+                          {user.signupSource === "app" ? (
+                            <span className="signup-source-badge signup-source-app">
+                              <FiSmartphone className="inline mr-1" size={14} />
+                              App
+                            </span>
+                          ) : (
+                            <span className="signup-source-badge signup-source-web">
+                              <FiMonitor className="inline mr-1" size={14} />
+                              Web
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -471,7 +489,7 @@ const UsersList = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="empty-state-cell">
+                    <td colSpan="7" className="empty-state-cell">
                       <div className="empty-state">
                         <FiUser className="empty-state-icon" />
                         <p>No users found</p>
@@ -675,6 +693,30 @@ const UsersList = () => {
                         </div>
                       </div>
                     )}
+
+                    <div className="user-detail-item">
+                      <div className="user-detail-label">
+                        {userToView.signupSource === "app" ? (
+                          <FiSmartphone className="user-detail-icon" />
+                        ) : (
+                          <FiMonitor className="user-detail-icon" />
+                        )}
+                        Signup Source
+                      </div>
+                      <div className="user-detail-value">
+                        {userToView.signupSource === "app" ? (
+                          <span className="signup-source-badge signup-source-app">
+                            <FiSmartphone className="inline mr-1" size={12} />
+                            App
+                          </span>
+                        ) : (
+                          <span className="signup-source-badge signup-source-web">
+                            <FiMonitor className="inline mr-1" size={12} />
+                            Web
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
                     <div className="user-detail-item">
                       <div className="user-detail-label">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiFileText, FiArrowLeft, FiSmartphone, FiFacebook } from "react-icons/fi";
+import { FiFileText, FiArrowLeft, FiSmartphone, FiFacebook, FiX } from "react-icons/fi";
 import metaApi from "../../../utils/metaApi";
 import { adAPI } from "../../../utils/api";
+import PlacesAutocomplete from "../../../Components/PlacesAutocomplete";
 
 export default function LeadFormAdSet() {
   const navigate = useNavigate();
@@ -16,12 +17,19 @@ export default function LeadFormAdSet() {
     name: "",
     daily_budget: "",
     page_id: campaignData.page_id || "",
+    min_age: "18",
+    max_age: "45",
+    genders: [],
     targeting: {
       geo_locations: { countries: [] },
       device_platforms: [],
       publisher_platforms: [],
+      facebook_positions: [],
+      instagram_positions: [],
     },
   });
+  const [customLocations, setCustomLocations] = useState([]); // Array of { latitude, longitude, radius, distance_unit, name, address }
+  const [selectedPlace, setSelectedPlace] = useState(null); // Store selected place from Google Places
 
   useEffect(() => {
     fetchPages();
@@ -70,6 +78,25 @@ export default function LeadFormAdSet() {
   const publisherPlatforms = [
     { value: "facebook", label: "Facebook", icon: FiFacebook, color: "blue" },
     { value: "instagram", label: "Instagram", icon: FiFacebook, color: "pink" },
+    { value: "messenger", label: "Messenger", icon: FiFacebook, color: "blue" },
+    { value: "audience_network", label: "Audience Network", icon: FiFacebook, color: "green" },
+  ];
+
+  const genders = [
+    { value: 1, label: "Male" },
+    { value: 2, label: "Female" },
+  ];
+
+  const facebookPositions = [
+    { value: "feed", label: "Feed" },
+    { value: "instant_article", label: "Instant Article" },
+  ];
+
+  const instagramPositions = [
+    { value: "stream", label: "Feed" },
+    { value: "reels", label: "Reels" },
+    { value: "story", label: "Story" },
+    { value: "explore", label: "Explore" },
   ];
 
   const handleInputChange = (e) => {
@@ -137,6 +164,120 @@ export default function LeadFormAdSet() {
     });
   };
 
+  const handleGenderToggle = (genderValue) => {
+    setFormData((prev) => {
+      const genders = [...prev.genders];
+      const index = genders.indexOf(genderValue);
+      if (index > -1) {
+        genders.splice(index, 1);
+      } else {
+        genders.push(genderValue);
+      }
+      return {
+        ...prev,
+        genders,
+      };
+    });
+  };
+
+  const handleFacebookPositionToggle = (position) => {
+    setFormData((prev) => {
+      const positions = [...prev.targeting.facebook_positions];
+      const index = positions.indexOf(position);
+      if (index > -1) {
+        positions.splice(index, 1);
+      } else {
+        positions.push(position);
+      }
+      return {
+        ...prev,
+        targeting: {
+          ...prev.targeting,
+          facebook_positions: positions,
+        },
+      };
+    });
+  };
+
+  const handleInstagramPositionToggle = (position) => {
+    setFormData((prev) => {
+      const positions = [...prev.targeting.instagram_positions];
+      const index = positions.indexOf(position);
+      if (index > -1) {
+        positions.splice(index, 1);
+        // If removing explore, we can optionally remove stream too (but not required)
+        // If removing stream and explore is still selected, keep explore but warn
+        if (position === 'stream' && positions.includes('explore')) {
+          // If stream is removed but explore is still there, remove explore too
+          // because explore requires stream
+          const exploreIndex = positions.indexOf('explore');
+          if (exploreIndex > -1) {
+            positions.splice(exploreIndex, 1);
+          }
+        }
+      } else {
+        positions.push(position);
+        // If selecting explore, automatically add stream (feed) as it's required
+        if (position === 'explore' && !positions.includes('stream')) {
+          positions.push('stream');
+        }
+      }
+      return {
+        ...prev,
+        targeting: {
+          ...prev.targeting,
+          instagram_positions: positions,
+        },
+      };
+    });
+  };
+
+  // Handle place selection from Google Places
+  const handlePlaceSelect = (placeInfo) => {
+    if (placeInfo) {
+      setSelectedPlace(placeInfo);
+      console.log("📍 Place selected:", placeInfo);
+      
+      // Automatically add to custom_locations if coordinates are available
+      if (placeInfo.location && placeInfo.location.lat && placeInfo.location.lng) {
+        const newCustomLocation = {
+          latitude: placeInfo.location.lat,
+          longitude: placeInfo.location.lng,
+          radius: 5, // Default radius in kilometers (within 2-17 km range)
+          distance_unit: "kilometer", // Always use kilometers
+          name: placeInfo.name || "",
+          address: placeInfo.address || "",
+          placeId: placeInfo.placeId || ""
+        };
+        
+        // Ensure radius is within valid range (2-17 km)
+        if (newCustomLocation.radius < 2) {
+          newCustomLocation.radius = 2;
+        } else if (newCustomLocation.radius > 17) {
+          newCustomLocation.radius = 17;
+        }
+        
+        // Check if this location already exists (avoid duplicates)
+        const exists = customLocations.some(loc => 
+          Math.abs(loc.latitude - newCustomLocation.latitude) < 0.0001 &&
+          Math.abs(loc.longitude - newCustomLocation.longitude) < 0.0001
+        );
+        
+        if (!exists) {
+          setCustomLocations([...customLocations, newCustomLocation]);
+          console.log("✅ Added to custom_locations:", newCustomLocation);
+          // Clear selected place after adding so user can add more
+          setTimeout(() => {
+            setSelectedPlace(null);
+          }, 2000);
+        } else {
+          console.log("ℹ️ Location already exists in custom_locations");
+          setSelectedPlace(null);
+        }
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -152,13 +293,40 @@ export default function LeadFormAdSet() {
       alert("Please enter Page ID");
       return;
     }
-    if (formData.targeting.geo_locations.countries.length === 0) {
-      alert("Please select at least one country");
+    if (!formData.min_age || !formData.max_age) {
+      alert("Please enter Min Age and Max Age");
       return;
     }
-    if (formData.targeting.device_platforms.length === 0) {
-      alert("Please select at least one device platform");
+    if (parseInt(formData.min_age) < 13 || parseInt(formData.min_age) > 65) {
+      alert("Min Age must be between 13 and 65");
       return;
+    }
+    if (parseInt(formData.max_age) < 13 || parseInt(formData.max_age) > 65) {
+      alert("Max Age must be between 13 and 65");
+      return;
+    }
+    if (parseInt(formData.min_age) > parseInt(formData.max_age)) {
+      alert("Min Age cannot be greater than Max Age");
+      return;
+    }
+    // Validate: Either countries or custom_locations must be provided
+    if (
+      formData.targeting.geo_locations.countries.length === 0 &&
+      customLocations.length === 0
+    ) {
+      alert("Please select at least one country or add a custom location using Google Places");
+      return;
+    }
+    
+    // Validate all custom locations have valid radius (2-17 km)
+    if (customLocations.length > 0) {
+      const invalidLocations = customLocations.filter(loc => 
+        !loc.radius || loc.radius < 2 || loc.radius > 17
+      );
+      if (invalidLocations.length > 0) {
+        alert("All custom locations must have a radius between 2 km and 17 km. Please adjust the radius values.");
+        return;
+      }
     }
     if (formData.targeting.publisher_platforms.length === 0) {
       alert("Please select at least one publisher platform");
@@ -171,6 +339,48 @@ export default function LeadFormAdSet() {
 
     setLoading(true);
     try {
+      // Build geo_locations object
+      const geoLocations = {};
+      
+      // Priority: Use custom_locations from Google Places
+      // Note: Meta API doesn't allow both custom_locations and countries together (causes overlap error)
+      if (customLocations.length > 0) {
+        geoLocations.custom_locations = customLocations.map(loc => ({
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          radius: loc.radius,
+          distance_unit: loc.distance_unit || "kilometer"
+        }));
+        
+        // Don't include countries when using custom_locations to avoid overlap error
+        console.log("✅ Using custom_locations from Google Places (countries excluded to avoid overlap):", geoLocations.custom_locations);
+      } else {
+        // No custom_locations - use countries
+        geoLocations.countries = formData.targeting.geo_locations.countries;
+      }
+
+      // Build targeting object with all fields
+      const targeting = {
+        geo_locations: geoLocations,
+        device_platforms: formData.targeting.device_platforms,
+        publisher_platforms: formData.targeting.publisher_platforms,
+        age_min: parseInt(formData.min_age),
+        age_max: parseInt(formData.max_age),
+      };
+
+      // Add genders only if selected (empty array means all genders)
+      if (formData.genders.length > 0) {
+        targeting.genders = formData.genders;
+      }
+
+      // Add positions only if selected
+      if (formData.targeting.facebook_positions.length > 0) {
+        targeting.facebook_positions = formData.targeting.facebook_positions;
+      }
+      if (formData.targeting.instagram_positions.length > 0) {
+        targeting.instagram_positions = formData.targeting.instagram_positions;
+      }
+
       const adsetPayload = {
         name: formData.name,
         campaign_id: campaignData.campaign_id,
@@ -178,8 +388,13 @@ export default function LeadFormAdSet() {
         page_id: formData.page_id,
         billing_event: "IMPRESSIONS",
         status: "PAUSED",
-        targeting: formData.targeting,
+        targeting,
       };
+
+      // Add leadgen_form_id if available from campaign
+      if (campaignData.leadgen_form_id) {
+        adsetPayload.leadgen_form_id = campaignData.leadgen_form_id;
+      }
 
       const response = await metaApi.createLeadFormAdSet(adsetPayload);
 
@@ -334,6 +549,208 @@ export default function LeadFormAdSet() {
             <div className="space-y-6 border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-900">Targeting</h3>
 
+              {/* Google Places Autocomplete - Location Search */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Search Location *
+                </label>
+                <p className="text-xs text-gray-600 mb-3">
+                  Search for a location using Google Places. You can add multiple locations - each will be automatically added to custom_locations for targeting.
+                </p>
+                <PlacesAutocomplete
+                  key={`places-${customLocations.length}`}
+                  value=""
+                  onChange={() => {}}
+                  onPlaceSelect={handlePlaceSelect}
+                  showPlaceDetails={false}
+                  placeholder="Search for a location (e.g., city, address, landmark)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                />
+              </div>
+
+              {/* Display Selected Place Details (temporary preview) */}
+              {selectedPlace && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <h5 className="font-semibold text-gray-900 text-sm">
+                      Preview:
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPlace(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <FiX className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-1 text-sm text-gray-700">
+                    {selectedPlace.name && (
+                      <div><strong>Name:</strong> {selectedPlace.name}</div>
+                    )}
+                    {selectedPlace.address && (
+                      <div><strong>Address:</strong> {selectedPlace.address}</div>
+                    )}
+                    {selectedPlace.location && (
+                      <div className="text-xs text-gray-500">
+                        <strong>Coordinates:</strong> {selectedPlace.location.lat.toFixed(6)}, {selectedPlace.location.lng.toFixed(6)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Display All Custom Locations */}
+              {customLocations.length > 0 && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="font-semibold text-gray-900 text-sm">
+                      Custom Locations ({customLocations.length})
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomLocations([]);
+                        setSelectedPlace(null);
+                      }}
+                      className="text-xs text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {customLocations.map((loc, idx) => (
+                      <div key={idx} className="bg-white p-3 border border-blue-200 rounded-lg">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            {loc.name && (
+                              <div className="font-semibold text-gray-900 text-sm mb-1">
+                                {loc.name}
+                              </div>
+                            )}
+                            {loc.address && (
+                              <div className="text-xs text-gray-600 mb-1">
+                                {loc.address}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-500">
+                              <span className="font-mono">Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomLocations(customLocations.filter((_, i) => i !== idx));
+                            }}
+                            className="ml-2 text-gray-400 hover:text-red-600"
+                            title="Remove location"
+                          >
+                            <FiX className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <label className="text-xs text-gray-700 whitespace-nowrap">
+                            Radius:
+                          </label>
+                          <input
+                            type="number"
+                            min="2"
+                            max="17"
+                            value={loc.radius}
+                            onChange={(e) => {
+                              const newLocations = [...customLocations];
+                              const newRadius = parseInt(e.target.value);
+                              // Validate and clamp radius between 2 and 17
+                              if (!isNaN(newRadius)) {
+                                if (newRadius < 2) {
+                                  newLocations[idx].radius = 2;
+                                } else if (newRadius > 17) {
+                                  newLocations[idx].radius = 17;
+                                } else {
+                                  newLocations[idx].radius = newRadius;
+                                }
+                              } else {
+                                newLocations[idx].radius = 5; // Default if invalid
+                              }
+                              setCustomLocations(newLocations);
+                            }}
+                            onBlur={(e) => {
+                              // Ensure value is within range on blur
+                              const newLocations = [...customLocations];
+                              const radius = parseInt(e.target.value);
+                              if (isNaN(radius) || radius < 2) {
+                                newLocations[idx].radius = 2;
+                              } else if (radius > 17) {
+                                newLocations[idx].radius = 17;
+                              }
+                              setCustomLocations(newLocations);
+                            }}
+                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <span className="text-xs text-gray-600">km</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Age Range */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Min Age <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="min_age"
+                    value={formData.min_age}
+                    onChange={handleInputChange}
+                    min="13"
+                    max="65"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Max Age <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="max_age"
+                    value={formData.max_age}
+                    onChange={handleInputChange}
+                    min="13"
+                    max="65"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Genders */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Genders (Optional)
+                </label>
+                <div className="flex gap-4">
+                  {genders.map((gender) => (
+                    <label key={gender.value} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.genders.includes(gender.value)}
+                        onChange={() => handleGenderToggle(gender.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">{gender.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Leave empty to target all genders</p>
+              </div>
+
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">
                   Countries <span className="text-red-500">*</span>
@@ -399,31 +816,122 @@ export default function LeadFormAdSet() {
                 <label className="block text-sm font-semibold text-gray-700">
                   Publisher Platforms <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {publisherPlatforms.map((publisher) => {
                     const IconComponent = publisher.icon;
                     return (
-                      <button
+                      <label
                         key={publisher.value}
-                        type="button"
-                        onClick={() => handlePublisherToggle(publisher.value)}
-                        className={`p-4 border-2 rounded-lg transition-all flex items-center justify-between ${
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${
                           formData.targeting.publisher_platforms.includes(publisher.value)
-                            ? `border-${publisher.color}-500 bg-${publisher.color}-50`
+                            ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <IconComponent className={`w-5 h-5 text-${publisher.color}-600`} />
-                          <span className="font-medium text-gray-900">{publisher.label}</span>
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="w-5 h-5" />
+                          <span className="font-medium text-sm">{publisher.label}</span>
                         </div>
-                        {formData.targeting.publisher_platforms.includes(publisher.value) && (
-                          <span className="text-green-500">✓</span>
-                        )}
-                      </button>
+                        <input
+                          type="checkbox"
+                          checked={formData.targeting.publisher_platforms.includes(publisher.value)}
+                          onChange={() => handlePublisherToggle(publisher.value)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </label>
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Facebook Positions */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facebook Positions (Optional)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {facebookPositions.map((position) => (
+                    <label
+                      key={position.value}
+                      className={`p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${
+                        formData.targeting.facebook_positions.includes(position.value)
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{position.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={formData.targeting.facebook_positions.includes(position.value)}
+                        onChange={() => handleFacebookPositionToggle(position.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Leave empty to use all positions</p>
+              </div>
+
+              {/* Instagram Positions */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Instagram Positions (Optional)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {instagramPositions.map((position) => (
+                    <label
+                      key={position.value}
+                      className={`p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${
+                        formData.targeting.instagram_positions.includes(position.value)
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{position.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={formData.targeting.instagram_positions.includes(position.value)}
+                        onChange={() => handleInstagramPositionToggle(position.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Leave empty to use all positions</p>
+              </div>
+
+              {/* Device Platforms */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Device Platforms (Optional)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {devicePlatforms.map((device) => {
+                    const IconComponent = device.icon;
+                    return (
+                      <label
+                        key={device.value}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${
+                          formData.targeting.device_platforms.includes(device.value)
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="w-5 h-5" />
+                          <span className="font-medium">{device.label}</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.targeting.device_platforms.includes(device.value)}
+                          onChange={() => handleDeviceToggle(device.value)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Leave empty to target all devices</p>
               </div>
             </div>
 

@@ -7,30 +7,15 @@ export default function LeadFormCampaign() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
-    objective: "OUTCOME_LEADS",
+    objective: "OUTCOME_LEADS", // Fixed to Leads for Lead Form campaigns
   });
   const [loading, setLoading] = useState(false);
-
-  const objectives = [
-    { value: "OUTCOME_AWARENESS", label: "Awareness", color: "purple" },
-    { value: "OUTCOME_ENGAGEMENT", label: "Engagement", color: "blue" },
-    { value: "OUTCOME_LEADS", label: "Leads", color: "green" },
-    { value: "OUTCOME_SALES", label: "Sales", color: "red" },
-    { value: "OUTCOME_TRAFFIC", label: "Traffic", color: "orange" },
-  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
-
-  const handleObjectiveSelect = (value) => {
-    setFormData((prev) => ({
-      ...prev,
-      objective: value,
     }));
   };
 
@@ -122,24 +107,12 @@ export default function LeadFormCampaign() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Campaign Objective <span className="text-red-500">*</span>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Campaign Objective
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {objectives.map((obj) => (
-                  <button
-                    key={obj.value}
-                    type="button"
-                    onClick={() => handleObjectiveSelect(obj.value)}
-                    className={`px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                      formData.objective === obj.value
-                        ? `border-${obj.color}-500 bg-${obj.color}-50 text-${obj.color}-700`
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {obj.label}
-                  </button>
-                ))}
+              <div className="px-4 py-3 bg-green-50 border-2 border-green-500 rounded-lg">
+                <span className="text-green-700 font-medium">Leads</span>
+                <p className="text-sm text-green-600 mt-1">Lead Form campaigns collect leads directly within the ad experience</p>
               </div>
             </div>
 

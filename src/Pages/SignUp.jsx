@@ -153,6 +153,7 @@ const SignUp = () => {
           phoneNumber: formData.phoneNumber.trim(),
           profileImage: formData.profileImage,
           referralCode: formData.referralCode.trim().toUpperCase() || undefined,
+          signupSource: "web",
         }),
       });
 

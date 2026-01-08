@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
-import { FiPhone, FiLink, FiFileText, FiPlus, FiList, FiBarChart2, FiFacebook, FiChevronDown, FiUser, FiRefreshCw, FiLogOut } from "react-icons/fi";
+import { FiPhone, FiLink, FiFileText, FiPlus, FiList, FiBarChart2, FiFacebook, FiChevronDown, FiUser, FiRefreshCw, FiLogOut, FiDollarSign } from "react-icons/fi";
 import MetaAdsManage from "../../Components/MetaAds/MetaAdsManage";
 import MetaAdsAnalytics from "../../Components/MetaAds/MetaAdsAnalytics";
 import ConnectMetaAccount from "../../Components/ConnectMetaAccount";
@@ -381,6 +381,27 @@ const MetaManagementPage = () => {
     alert("Meta account disconnected successfully!");
   };
 
+  // Extract account ID without "act_" prefix
+  const getAccountIdWithoutPrefix = (accountId) => {
+    if (!accountId) return "";
+    // Remove "act_" prefix if present
+    return accountId.startsWith("act_") ? accountId.substring(4) : accountId;
+  };
+
+  // Handle Add Funds button click
+  const handleAddFunds = () => {
+    if (!adAccountId) {
+      alert("Please select an ad account first");
+      return;
+    }
+    
+    const accountIdWithoutPrefix = getAccountIdWithoutPrefix(adAccountId);
+    const billingUrl = `https://business.facebook.com/billing_hub/payment_activity?asset_id=${accountIdWithoutPrefix}&placement=ads_manager&payment_account_id=${accountIdWithoutPrefix}`;
+    
+    // Open in new tab
+    window.open(billingUrl, "_blank", "noopener,noreferrer");
+  };
+
   const metaOptions = [
     {
       id: 1,
@@ -457,62 +478,61 @@ const MetaManagementPage = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Meta Management</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your Meta advertising campaigns and lead generation
-          </p>
-        </div>
-        
-        {/* Ad Account Selector */}
-        {isConnected && (
-          <div className="flex items-center gap-3">
-            {/* Always show Ad Account selector when connected */}
-            <div className="relative">
-              <label className="absolute left-3 -top-2.5 bg-white px-1.5 text-xs font-medium text-blue-600 pointer-events-none">
-                Ad Account:
-              </label>
-              <select
-                value={adAccountId || ""}
-                onChange={handleAccountSwitch}
-                disabled={loadingAccounts}
-                className="appearance-none bg-white border-2 border-blue-500 rounded-lg px-3 pt-3 pb-2 pr-8 text-sm font-medium text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 cursor-pointer hover:border-blue-600 transition-colors w-[280px] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                    {loadingAccounts ? (
-                      <option value="">Loading...</option>
-                    ) : availableAccounts.length === 0 ? (
-                      adAccountId ? (
-                        <option value={adAccountId}>{adAccountId}</option>
-                      ) : (
-                        <option value="">No accounts</option>
-                      )
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Meta Management</h1>
+        <p className="text-gray-600 mt-1">
+          Manage your Meta advertising campaigns and lead generation
+        </p>
+      </div>
+
+      {/* Account Info Card */}
+      {isConnected && (
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            {/* Left Section: Ad Account Selector */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">Ad Account:</span>
+              <div className="relative flex-1 min-w-0">
+                <select
+                  value={adAccountId || ""}
+                  onChange={handleAccountSwitch}
+                  disabled={loadingAccounts}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-9"
+                >
+                  {loadingAccounts ? (
+                    <option value="">Loading...</option>
+                  ) : availableAccounts.length === 0 ? (
+                    adAccountId ? (
+                      <option value={adAccountId}>{adAccountId}</option>
                     ) : (
-                      <>
-                        <option value="">Select Account</option>
-                        {availableAccounts.map((account) => (
-                          <option key={account.id} value={account.id}>
-                            {account.name || account.id} {account.currency ? `(${account.currency})` : ''} - {account.id}
-                          </option>
-                        ))}
-                      </>
-                    )}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <FiChevronDown className="w-4 h-4 text-blue-600" />
+                      <option value="">No accounts</option>
+                    )
+                  ) : (
+                    <>
+                      <option value="">Select Account</option>
+                      {availableAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.name || account.id} {account.currency ? `(${account.currency})` : ''} - {account.id}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <FiChevronDown className="w-4 h-4 text-gray-400" />
+                </div>
               </div>
             </div>
-            {/* Meta Disconnect Button */}
-           
-            {/* Available Funds Box - Green border and green text */}
+
+            {/* Middle Section: Available Funds */}
             {adAccountId && (
-              <div className="border-2 border-green-500 rounded-lg px-4 py-2.5 bg-green-50 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-green-700">Available Funds:</span>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">Available Funds:</span>
+                <div className="flex-1 bg-green-50 border border-green-200 rounded-md px-3 py-2 h-9 flex items-center justify-between gap-2">
                   {fundsLoading[adAccountId] ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-600 border-t-transparent"></div>
                   ) : accountFunds[adAccountId] ? (
-                    <span className="text-base font-bold text-green-600">
+                    <span className="text-sm font-bold text-green-700">
                       {accountFunds[adAccountId].currency} {accountFunds[adAccountId].amount.toFixed(2)}
                     </span>
                   ) : (
@@ -520,7 +540,7 @@ const MetaManagementPage = () => {
                   )}
                   <button
                     onClick={() => fetchAccountFunds(adAccountId, true)}
-                    className="ml-1 p-1 hover:bg-green-100 rounded transition-colors"
+                    className="p-1 hover:bg-green-100 rounded transition-colors flex-shrink-0"
                     title="Refresh Available Funds"
                     disabled={fundsLoading[adAccountId]}
                   >
@@ -529,17 +549,31 @@ const MetaManagementPage = () => {
                 </div>
               </div>
             )}
-             <button
-              onClick={handleDisconnect}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
-              title="Disconnect Meta Account"
-            >
-              <FiLogOut className="w-4 h-4" />
-              <span>Disconnect</span>
-            </button>
+
+            {/* Right Section: Action Buttons */}
+            <div className="flex items-center gap-2 lg:flex-shrink-0">
+              {adAccountId && (
+                <button
+                  onClick={handleAddFunds}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-semibold transition-all shadow-sm hover:shadow-md whitespace-nowrap h-9"
+                  title="Add Funds to Ad Account"
+                >
+                  <FiDollarSign className="w-4 h-4" />
+                  <span>Add Funds</span>
+                </button>
+              )}
+              <button
+                onClick={handleDisconnect}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm font-medium transition-colors shadow-sm hover:shadow-md whitespace-nowrap h-9"
+                title="Disconnect Meta Account"
+              >
+                <FiLogOut className="w-4 h-4" />
+                <span>Disconnect</span>
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
