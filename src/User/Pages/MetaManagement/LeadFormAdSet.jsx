@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiFileText, FiArrowLeft, FiSmartphone, FiFacebook, FiX } from "react-icons/fi";
+import { FiFileText, FiArrowLeft, FiSmartphone, FiFacebook, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import metaApi from "../../../utils/metaApi";
 import { adAPI } from "../../../utils/api";
 import PlacesAutocomplete from "../../../Components/PlacesAutocomplete";
@@ -30,6 +30,7 @@ export default function LeadFormAdSet() {
   });
   const [customLocations, setCustomLocations] = useState([]); // Array of { latitude, longitude, radius, distance_unit, name, address }
   const [selectedPlace, setSelectedPlace] = useState(null); // Store selected place from Google Places
+  const [expandedLocations, setExpandedLocations] = useState(new Set()); // Track which location cards are expanded
 
   useEffect(() => {
     fetchPages();
@@ -289,6 +290,11 @@ export default function LeadFormAdSet() {
       alert("Please enter daily budget");
       return;
     }
+    const budgetAmount = parseFloat(formData.daily_budget);
+    if (isNaN(budgetAmount) || budgetAmount <= 0) {
+      alert("Please enter a valid daily budget amount");
+      return;
+    }
     if (!formData.page_id.trim()) {
       alert("Please enter Page ID");
       return;
@@ -384,7 +390,7 @@ export default function LeadFormAdSet() {
       const adsetPayload = {
         name: formData.name,
         campaign_id: campaignData.campaign_id,
-        daily_budget: formData.daily_budget.toString(),
+        daily_budget: (parseFloat(formData.daily_budget) * 100).toString(), // Convert rupees to paise (×100)
         page_id: formData.page_id,
         billing_event: "IMPRESSIONS",
         status: "PAUSED",
@@ -477,7 +483,7 @@ export default function LeadFormAdSet() {
 
             <div className="space-y-2">
               <label htmlFor="daily_budget" className="block text-sm font-semibold text-gray-700">
-                Daily Budget <span className="text-red-500">*</span>
+                Daily Budget (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -486,9 +492,12 @@ export default function LeadFormAdSet() {
                 value={formData.daily_budget}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                placeholder="Enter daily budget"
+                placeholder="Enter daily budget in rupees (e.g., 500)"
+                min="1"
+                step="1"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">Amount will be converted to paise (×100) when submitting</p>
             </div>
 
             <div className="space-y-2">
@@ -601,7 +610,7 @@ export default function LeadFormAdSet() {
                 </div>
               )}
 
-              {/* Display All Custom Locations */}
+              {/* Display All Custom Locations - Each card is an accordion */}
               {customLocations.length > 0 && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
@@ -613,6 +622,7 @@ export default function LeadFormAdSet() {
                       onClick={() => {
                         setCustomLocations([]);
                         setSelectedPlace(null);
+                        setExpandedLocations(new Set());
                       }}
                       className="text-xs text-red-600 hover:text-red-800 font-medium"
                     >
@@ -620,78 +630,121 @@ export default function LeadFormAdSet() {
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {customLocations.map((loc, idx) => (
-                      <div key={idx} className="bg-white p-3 border border-blue-200 rounded-lg">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            {loc.name && (
-                              <div className="font-semibold text-gray-900 text-sm mb-1">
-                                {loc.name}
-                              </div>
-                            )}
-                            {loc.address && (
-                              <div className="text-xs text-gray-600 mb-1">
-                                {loc.address}
-                              </div>
-                            )}
-                            <div className="text-xs text-gray-500">
-                              <span className="font-mono">Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}</span>
-                            </div>
-                          </div>
+                    {customLocations.map((loc, idx) => {
+                      const isExpanded = expandedLocations.has(idx);
+                      return (
+                        <div key={idx} className="bg-white border border-blue-200 rounded-lg overflow-hidden">
+                          {/* Accordion Header for each location card */}
                           <button
                             type="button"
                             onClick={() => {
-                              setCustomLocations(customLocations.filter((_, i) => i !== idx));
-                            }}
-                            className="ml-2 text-gray-400 hover:text-red-600"
-                            title="Remove location"
-                          >
-                            <FiX className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <label className="text-xs text-gray-700 whitespace-nowrap">
-                            Radius:
-                          </label>
-                          <input
-                            type="number"
-                            min="2"
-                            max="17"
-                            value={loc.radius}
-                            onChange={(e) => {
-                              const newLocations = [...customLocations];
-                              const newRadius = parseInt(e.target.value);
-                              // Validate and clamp radius between 2 and 17
-                              if (!isNaN(newRadius)) {
-                                if (newRadius < 2) {
-                                  newLocations[idx].radius = 2;
-                                } else if (newRadius > 17) {
-                                  newLocations[idx].radius = 17;
-                                } else {
-                                  newLocations[idx].radius = newRadius;
-                                }
+                              const newExpanded = new Set(expandedLocations);
+                              if (isExpanded) {
+                                newExpanded.delete(idx);
                               } else {
-                                newLocations[idx].radius = 5; // Default if invalid
+                                newExpanded.add(idx);
                               }
-                              setCustomLocations(newLocations);
+                              setExpandedLocations(newExpanded);
                             }}
-                            onBlur={(e) => {
-                              // Ensure value is within range on blur
-                              const newLocations = [...customLocations];
-                              const radius = parseInt(e.target.value);
-                              if (isNaN(radius) || radius < 2) {
-                                newLocations[idx].radius = 2;
-                              } else if (radius > 17) {
-                                newLocations[idx].radius = 17;
-                              }
-                              setCustomLocations(newLocations);
-                            }}
-                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <span className="text-xs text-gray-600">km</span>
+                            className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex-1 text-left">
+                              {loc.name && (
+                                <div className="font-semibold text-gray-900 text-sm mb-1">
+                                  {loc.name}
+                                </div>
+                              )}
+                              {loc.address && (
+                                <div className="text-xs text-gray-600">
+                                  {loc.address}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 ml-3">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCustomLocations(customLocations.filter((_, i) => i !== idx));
+                                  const newExpanded = new Set(expandedLocations);
+                                  newExpanded.delete(idx);
+                                  // Adjust indices for remaining items
+                                  const adjustedExpanded = new Set();
+                                  newExpanded.forEach((expandedIdx) => {
+                                    if (expandedIdx > idx) {
+                                      adjustedExpanded.add(expandedIdx - 1);
+                                    } else if (expandedIdx < idx) {
+                                      adjustedExpanded.add(expandedIdx);
+                                    }
+                                  });
+                                  setExpandedLocations(adjustedExpanded);
+                                }}
+                                className="text-gray-400 hover:text-red-600"
+                                title="Remove location"
+                              >
+                                <FiX className="w-4 h-4" />
+                              </button>
+                              {isExpanded ? (
+                                <FiChevronUp className="w-5 h-5 text-gray-600" />
+                              ) : (
+                                <FiChevronDown className="w-5 h-5 text-gray-600" />
+                              )}
+                            </div>
+                          </button>
+                          {/* Accordion Content - Details and Radius */}
+                          {isExpanded && (
+                            <div className="px-3 pb-3 border-t border-gray-200">
+                              <div className="pt-3 space-y-2">
+                                <div className="text-xs text-gray-500">
+                                  <span className="font-mono">Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-xs text-gray-700 whitespace-nowrap">
+                                    Radius:
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="2"
+                                    max="17"
+                                    value={loc.radius}
+                                    onChange={(e) => {
+                                      const newLocations = [...customLocations];
+                                      const newRadius = parseInt(e.target.value);
+                                      // Validate and clamp radius between 2 and 17
+                                      if (!isNaN(newRadius)) {
+                                        if (newRadius < 2) {
+                                          newLocations[idx].radius = 2;
+                                        } else if (newRadius > 17) {
+                                          newLocations[idx].radius = 17;
+                                        } else {
+                                          newLocations[idx].radius = newRadius;
+                                        }
+                                      } else {
+                                        newLocations[idx].radius = 5; // Default if invalid
+                                      }
+                                      setCustomLocations(newLocations);
+                                    }}
+                                    onBlur={(e) => {
+                                      // Ensure value is within range on blur
+                                      const newLocations = [...customLocations];
+                                      const radius = parseInt(e.target.value);
+                                      if (isNaN(radius) || radius < 2) {
+                                        newLocations[idx].radius = 2;
+                                      } else if (radius > 17) {
+                                        newLocations[idx].radius = 17;
+                                      }
+                                      setCustomLocations(newLocations);
+                                    }}
+                                    className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  <span className="text-xs text-gray-600">km</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

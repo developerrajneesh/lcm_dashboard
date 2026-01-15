@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FiRefreshCw, FiChevronDown, FiChevronUp, FiDollarSign, FiClock, FiGlobe, FiTrendingUp, FiLayers, FiTarget } from "react-icons/fi";
+import { FiRefreshCw, FiChevronDown, FiChevronUp, FiClock, FiGlobe, FiTrendingUp, FiLayers, FiTarget } from "react-icons/fi";
 import { campaignAPI, adsetAPI, adAPI } from "../../utils/api";
 
 const AccountInfo = ({ adAccountId, accessToken }) => {
@@ -311,7 +311,7 @@ const AccountInfo = ({ adAccountId, accessToken }) => {
             </div>
             <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
               <div className="flex items-center gap-2 mb-2">
-                <FiDollarSign className="w-4 h-4 text-orange-600" />
+                <span className="text-orange-600 font-bold text-lg">₹</span>
                 <p className="text-xs text-gray-600">Amount Spent</p>
               </div>
               <p className="text-lg font-bold text-gray-900">

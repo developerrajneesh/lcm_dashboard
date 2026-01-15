@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiLink, FiImage, FiArrowLeft, FiFileText } from "react-icons/fi";
+import { FiLink, FiImage, FiArrowLeft, FiFileText, FiUpload, FiX } from "react-icons/fi";
 import metaApi from "../../../utils/metaApi";
 import { adAPI } from "../../../utils/api";
+import axios from "axios";
+
+// Get API base URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 export default function LinkAdCreative() {
   const navigate = useNavigate();
@@ -21,6 +26,9 @@ export default function LinkAdCreative() {
   });
   const [pages, setPages] = useState([]);
   const [loadingPages, setLoadingPages] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     fetchPages();
@@ -64,6 +72,70 @@ export default function LinkAdCreative() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image size should be less than 10MB");
+      return;
+    }
+
+    setSelectedImage(file);
+    setUploadingImage(true);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+      setImagePreview(base64String);
+
+      try {
+        // Upload to S3 automatically
+        const response = await axios.post(
+          `${API_BASE_URL}/ads/upload-image-s3`,
+          {
+            imageBase64: base64String,
+          }
+        );
+
+        if (response.data.success && response.data.url) {
+          setFormData((prev) => ({
+            ...prev,
+            picture_url: response.data.url,
+          }));
+        } else {
+          throw new Error("Upload failed");
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert(`Failed to upload image: ${error.response?.data?.error || error.message}`);
+        // Reset on error
+        setSelectedImage(null);
+        setImagePreview(null);
+      } finally {
+        setUploadingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setFormData((prev) => ({
+      ...prev,
+      picture_url: "",
     }));
   };
 
@@ -148,140 +220,239 @@ export default function LinkAdCreative() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ad Creative Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Enter ad creative name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FiFileText /> Page ID <span className="text-red-500">*</span>
-            </label>
-            {loadingPages ? (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                <span className="text-gray-500">Loading pages...</span>
+        <form onSubmit={handleSubmit}>
+          {/* Two-column layout when image is uploaded, single column when not */}
+          <div className={`grid gap-6 ${(imagePreview || formData.picture_url) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+            {/* Form Fields Column */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ad Creative Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter ad creative name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  required
+                />
               </div>
-            ) : pages.length > 0 ? (
-              <select
-                name="page_id"
-                value={formData.page_id}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                required
-              >
-                <option value="">Select a Facebook Page</option>
-                {pages.map((page) => (
-                  <option key={page.id} value={page.id}>
-                    {page.name} ({page.id})
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                name="page_id"
-                value={formData.page_id}
-                onChange={handleInputChange}
-                placeholder="Enter your Facebook Page ID"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                required
-              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <FiFileText /> Page ID <span className="text-red-500">*</span>
+                </label>
+                {loadingPages ? (
+                  <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    <span className="text-gray-500">Loading pages...</span>
+                  </div>
+                ) : pages.length > 0 ? (
+                  <select
+                    name="page_id"
+                    value={formData.page_id}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select a Facebook Page</option>
+                    {pages.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.name} ({page.id})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    name="page_id"
+                    value={formData.page_id}
+                    onChange={handleInputChange}
+                    placeholder="Enter your Facebook Page ID"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    required
+                  />
+                )}
+                <small className="text-gray-500 text-sm mt-1 block">Your Facebook Page ID where the ad will appear</small>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <FiImage /> Picture <span className="text-red-500">*</span>
+                </label>
+                
+                {/* Image Upload Section */}
+                <div className="space-y-3">
+                  {!imagePreview && !formData.picture_url && (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-pink-500 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                        id="image-upload"
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className="cursor-pointer flex flex-col items-center gap-2"
+                      >
+                        <FiUpload className="w-8 h-8 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          Click to upload an image
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          PNG, JPG, GIF up to 10MB
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {formData.picture_url && !uploadingImage && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <span className="text-green-600 text-sm">✓ Image uploaded successfully</span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="ml-auto text-red-500 hover:text-red-700"
+                        >
+                          <FiX />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual URL input as fallback */}
+                  {!imagePreview && !formData.picture_url && (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-500 mb-2">Or enter image URL manually:</p>
+                      <input
+                        type="url"
+                        name="picture_url"
+                        value={formData.picture_url}
+                        onChange={handleInputChange}
+                        placeholder="https://example.com/image.jpg"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <FiLink /> Link URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  name="link_url"
+                  value={formData.link_url}
+                  onChange={handleInputChange}
+                  placeholder="https://yourwebsite.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message (Optional)
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Enter message"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  rows="3"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Headline (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="headline"
+                    value={formData.headline}
+                    onChange={handleInputChange}
+                    placeholder="Enter headline"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Enter description"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-pink-500 text-white rounded-lg font-medium hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Creating..." : "Create Ad Creative"}
+                </button>
+              </div>
+            </div>
+
+            {/* Image Preview Column - Only shown when image is uploaded */}
+            {(imagePreview || formData.picture_url) && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <FiImage /> Image Preview
+                  </label>
+                  <div className="relative flex items-center justify-center bg-gray-50 rounded-lg border border-gray-300 p-4 min-h-[300px]">
+                    {imagePreview ? (
+                      <>
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="max-w-full max-h-[400px] object-contain rounded-lg"
+                        />
+                        {uploadingImage && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                            <div className="text-white text-center">
+                              <div className="animate-spin mb-2">⏳</div>
+                              <div className="text-sm">Uploading to AWS...</div>
+                            </div>
+                          </div>
+                        )}
+                        {!uploadingImage && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600"
+                          >
+                            <FiX className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
+                    ) : formData.picture_url ? (
+                      <img
+                        src={formData.picture_url}
+                        alt="Preview"
+                        className="max-w-full max-h-[400px] object-contain rounded-lg"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             )}
-            <small className="text-gray-500 text-sm mt-1 block">Your Facebook Page ID where the ad will appear</small>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FiImage /> Picture URL <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="url"
-              name="picture_url"
-              value={formData.picture_url}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FiLink /> Link URL <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="url"
-              name="link_url"
-              value={formData.link_url}
-              onChange={handleInputChange}
-              placeholder="https://yourwebsite.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Message (Optional)
-            </label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleInputChange}
-              placeholder="Enter message"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              rows="3"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Headline (Optional)
-              </label>
-              <input
-                type="text"
-                name="headline"
-                value={formData.headline}
-                onChange={handleInputChange}
-                placeholder="Enter headline"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description (Optional)
-              </label>
-              <input
-                type="text"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Enter description"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-pink-500 text-white rounded-lg font-medium hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Creating..." : "Create Ad Creative"}
-            </button>
           </div>
         </form>
       </div>

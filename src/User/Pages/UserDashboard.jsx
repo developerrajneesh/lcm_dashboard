@@ -12,6 +12,7 @@ import {
   FiCheckCircle,
   FiXCircle
 } from "react-icons/fi";
+import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const API_BASE_URL = `${BACKEND_URL}/api/v1`;
@@ -48,6 +49,7 @@ const UserDashboard = () => {
           fetchChatConversations(parsedUser.id),
           fetchIvrStatus(parsedUser.id),
           fetchRecentCreatives(parsedUser.id),
+          fetchSubscriptionStatus(parsedUser),
         ]);
       }
     } catch (error) {
@@ -134,6 +136,49 @@ const UserDashboard = () => {
       }
     } catch (error) {
       console.error("Error fetching recent creatives:", error);
+    }
+  };
+
+  const fetchSubscriptionStatus = async (userData) => {
+    try {
+      const authToken = localStorage.getItem("authToken");
+      const userId = userData.id || userData._id;
+
+      const config = {
+        params: {
+          userId: userId,
+        },
+      };
+
+      if (authToken) {
+        config.headers = {
+          Authorization: `Bearer ${authToken}`,
+        };
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/subscription/active-subscription`, config);
+
+      if (response.data.success && response.data.data) {
+        const subscription = response.data.data;
+        // Set the plan name (e.g., "PREMIUM PLAN", "BASIC PLAN")
+        setStats((prev) => ({
+          ...prev,
+          subscriptionStatus: subscription.planName || "Free",
+        }));
+      } else {
+        // No active subscription found
+        setStats((prev) => ({
+          ...prev,
+          subscriptionStatus: "Free",
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching subscription status:", error);
+      // Default to "Free" on error
+      setStats((prev) => ({
+        ...prev,
+        subscriptionStatus: "Free",
+      }));
     }
   };
 

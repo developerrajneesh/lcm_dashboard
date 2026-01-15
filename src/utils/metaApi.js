@@ -411,6 +411,41 @@ class MetaApiService {
 
     return await response.json();
   }
+
+  /**
+   * Verify WhatsApp number for a page
+   * @param {string} pageId - Facebook Page ID
+   * @param {string} whatsappNumber - WhatsApp number to verify
+   * @param {string} verificationCode - Optional verification code for OTP verification
+   * @returns {Promise<Object>} Verification response
+   */
+  async verifyWhatsAppNumber(pageId, whatsappNumber, verificationCode = null) {
+    const authData = this.getAuthData();
+    const payload = {
+      page_id: pageId,
+      fb_token: authData.fb_token,
+      whatsapp_number: whatsappNumber,
+    };
+    
+    if (verificationCode) {
+      payload.verification_code = verificationCode;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/click-to-whatsapp/verify-whatsapp-number`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || error.message || "Failed to verify WhatsApp number");
+    }
+
+    return await response.json();
+  }
 }
 
 export default new MetaApiService();

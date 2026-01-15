@@ -325,23 +325,23 @@ const PrivacyPolicy = () => {
                 practices, please contact us:
               </p>
               <div className="bg-white rounded-lg p-4 mt-4">
-                <p className="text-gray-800 font-semibold mb-2">LCM Privacy Team</p>
+                <p className="text-gray-800 font-semibold mb-2">Leads Craft Marketing Privacy Team</p>
                 <p className="text-gray-700">
                   <strong>Email:</strong>{" "}
                   <a
-                    href="mailto:privacy@lcm.com"
+                    href="mailto:leadscraftmarketing@gmail.com"
                     className="text-blue-600 hover:text-blue-700 underline"
                   >
-                    privacy@lcm.com
+                    leadscraftmarketing@gmail.com
                   </a>
                 </p>
                 <p className="text-gray-700 mt-2">
                   <strong>Support Email:</strong>{" "}
                   <a
-                    href="mailto:support@lcm.com"
+                    href="mailto:support@leadscraftmarketing.com"
                     className="text-blue-600 hover:text-blue-700 underline"
                   >
-                    support@lcm.com
+                    support@leadscraftmarketing.com
                   </a>
                 </p>
               </div>

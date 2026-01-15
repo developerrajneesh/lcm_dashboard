@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
-import { FiPhone, FiLink, FiFileText, FiPlus, FiList, FiBarChart2, FiFacebook, FiChevronDown, FiUser, FiRefreshCw, FiLogOut, FiDollarSign } from "react-icons/fi";
+import { FiPhone, FiLink, FiFileText, FiPlus, FiList, FiBarChart2, FiFacebook, FiChevronDown, FiUser, FiRefreshCw, FiLogOut } from "react-icons/fi";
 import MetaAdsManage from "../../Components/MetaAds/MetaAdsManage";
 import MetaAdsAnalytics from "../../Components/MetaAds/MetaAdsAnalytics";
 import ConnectMetaAccount from "../../Components/ConnectMetaAccount";
@@ -558,7 +558,7 @@ const MetaManagementPage = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-semibold transition-all shadow-sm hover:shadow-md whitespace-nowrap h-9"
                   title="Add Funds to Ad Account"
                 >
-                  <FiDollarSign className="w-4 h-4" />
+                  <span className="text-base font-bold">₹</span>
                   <span>Add Funds</span>
                 </button>
               )}

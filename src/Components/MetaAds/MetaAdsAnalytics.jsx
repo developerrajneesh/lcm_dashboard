@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiTrendingUp, FiEye, FiMousePointer, FiDollarSign, FiRefreshCw } from "react-icons/fi";
+import { FiTrendingUp, FiEye, FiMousePointer, FiRefreshCw } from "react-icons/fi";
 import { campaignAPI } from "../../utils/api";
+
+// Rupee Icon Component
+const RupeeIcon = ({ className }) => (
+  <span className={`font-bold text-lg ${className}`}>₹</span>
+);
 
 const MetaAdsAnalytics = ({ accessToken, adAccountId }) => {
   const [dateRange, setDateRange] = useState("30");
@@ -11,8 +16,8 @@ const MetaAdsAnalytics = ({ accessToken, adAccountId }) => {
     reach: "0",
     clicks: "0",
     ctr: "0%",
-    costPerResult: "$0.00",
-    amountSpent: "$0.00",
+    costPerResult: "₹0.00",
+    amountSpent: "₹0.00",
   });
 
   useEffect(() => {
@@ -54,8 +59,8 @@ const MetaAdsAnalytics = ({ accessToken, adAccountId }) => {
       reach: activeCampaigns.toString(),
       clicks: totalCampaigns.toString(),
       ctr: totalCampaigns > 0 ? "N/A" : "0%",
-      costPerResult: "$0.00",
-      amountSpent: "$0.00",
+      costPerResult: "₹0.00",
+      amountSpent: "₹0.00",
     });
   };
 
@@ -91,14 +96,14 @@ const MetaAdsAnalytics = ({ accessToken, adAccountId }) => {
     {
       label: "Cost per Result",
       value: stats.costPerResult,
-      icon: FiDollarSign,
+      icon: RupeeIcon,
       color: "text-red-600",
       bgColor: "bg-red-100",
     },
     {
       label: "Amount Spent",
       value: stats.amountSpent,
-      icon: FiDollarSign,
+      icon: RupeeIcon,
       color: "text-indigo-600",
       bgColor: "bg-indigo-100",
     },

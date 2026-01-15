@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
-import { FiArrowLeft, FiGlobe, FiSmartphone, FiFacebook, FiFileText, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiGlobe, FiSmartphone, FiFacebook, FiFileText, FiX, FiCheck, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import metaApi from "../../../utils/metaApi";
 import { adAPI } from "../../../utils/api";
 import PlacesAutocomplete from "../../../Components/PlacesAutocomplete";
@@ -31,6 +31,11 @@ export default function WhatsAppAdSet() {
   const [loadingPages, setLoadingPages] = useState(false);
   const [customLocations, setCustomLocations] = useState([]); // Array of { latitude, longitude, radius, distance_unit, name, address }
   const [selectedPlace, setSelectedPlace] = useState(null); // Store selected place from Google Places
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState(null); // null, "VERIFIED", "VERIFICATION_CODE_SEND_SUCCESS"
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [expandedLocations, setExpandedLocations] = useState(new Set()); // Track which location cards are expanded
 
   useEffect(() => {
     fetchPages();
@@ -230,6 +235,42 @@ export default function WhatsAppAdSet() {
     });
   };
 
+  const handleVerifyWhatsAppNumber = async () => {
+    if (!whatsappNumber.trim()) {
+      alert("Please enter WhatsApp number");
+      return;
+    }
+    if (!formData.page_id) {
+      alert("Please select a Page ID first");
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const response = await metaApi.verifyWhatsAppNumber(
+        formData.page_id,
+        whatsappNumber,
+        verificationCode || null
+      );
+
+      if (response.data?.verification_status === "VERIFIED") {
+        setVerificationStatus("VERIFIED");
+        setVerificationCode("");
+        alert("WhatsApp number verified successfully!");
+      } else if (response.data?.verification_status === "VERIFICATION_CODE_SEND_SUCCESS") {
+        setVerificationStatus("VERIFICATION_CODE_SEND_SUCCESS");
+        alert("Verification code sent successfully! Please check your WhatsApp and enter the code.");
+      } else {
+        alert(`Verification status: ${response.data?.verification_status || "Unknown"}`);
+      }
+    } catch (error) {
+      alert(`Error verifying WhatsApp number: ${error.message}`);
+      console.error("WhatsApp verification error:", error);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   // Handle place selection from Google Places
   const handlePlaceSelect = (placeInfo) => {
     if (placeInfo) {
@@ -285,6 +326,11 @@ export default function WhatsAppAdSet() {
       alert("Please enter daily budget");
       return;
     }
+    const budgetAmount = parseFloat(formData.daily_budget);
+    if (isNaN(budgetAmount) || budgetAmount <= 0) {
+      alert("Please enter a valid daily budget amount");
+      return;
+    }
     if (!formData.page_id.trim()) {
       alert("Please enter Page ID");
       return;
@@ -330,6 +376,15 @@ export default function WhatsAppAdSet() {
     }
     if (!campaignData.campaign_id) {
       alert("Campaign ID is missing. Please create campaign first.");
+      return;
+    }
+    // Validate WhatsApp number verification
+    if (!whatsappNumber.trim()) {
+      alert("Please enter WhatsApp number and verify it before creating the ad set");
+      return;
+    }
+    if (verificationStatus !== "VERIFIED") {
+      alert("Please verify your WhatsApp number before creating the ad set. Click the 'Verify' button to verify your number.");
       return;
     }
 
@@ -380,7 +435,7 @@ export default function WhatsAppAdSet() {
       const adsetPayload = {
         name: formData.name,
         campaign_id: campaignData.campaign_id,
-        daily_budget: formData.daily_budget.toString(),
+        daily_budget: (parseFloat(formData.daily_budget) * 100).toString(), // Convert rupees to paise (×100)
         page_id: formData.page_id,
         destination_type: "WHATSAPP",
         optimization_goal: "CONVERSATIONS",
@@ -496,18 +551,106 @@ export default function WhatsAppAdSet() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Daily Budget <span className="text-red-500">*</span>
+                Daily Budget (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 name="daily_budget"
                 value={formData.daily_budget}
                 onChange={handleInputChange}
-                placeholder="Enter daily budget"
+                placeholder="Enter daily budget in rupees (e.g., 500)"
+                min="1"
+                step="1"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">Amount will be converted to paise (×100) when submitting</p>
             </div>
+          </div>
+
+          {/* WhatsApp Number Verification */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              WhatsApp Number <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={whatsappNumber}
+                  onChange={(e) => {
+                    setWhatsappNumber(e.target.value);
+                    // Reset verification status when number changes
+                    if (verificationStatus) {
+                      setVerificationStatus(null);
+                      setVerificationCode("");
+                    }
+                  }}
+                  placeholder="Enter WhatsApp number (e.g., 919565347000)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-10"
+                  disabled={verificationStatus === "VERIFIED"}
+                />
+                {verificationStatus === "VERIFIED" && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <FiCheck className="w-5 h-5 text-green-500" />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleVerifyWhatsAppNumber}
+                disabled={verifying || !whatsappNumber.trim() || !formData.page_id || verificationStatus === "VERIFIED"}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {verifying ? "Verifying..." : verificationStatus === "VERIFIED" ? "Verified" : "Verify"}
+              </button>
+            </div>
+            
+            {/* OTP Input Field - Show when verification code is sent */}
+            {verificationStatus === "VERIFICATION_CODE_SEND_SUCCESS" && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter Verification Code
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    placeholder="Enter OTP code"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyWhatsAppNumber}
+                    disabled={verifying || !verificationCode.trim()}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {verifying ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  A verification code has been sent to your WhatsApp number. Please enter it above.
+                </p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {verificationStatus === "VERIFIED" && (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-700">
+                  <FiCheck className="w-5 h-5" />
+                  <span className="text-sm font-medium">WhatsApp number verified successfully!</span>
+                </div>
+              </div>
+            )}
+
+            {/* Helper Text */}
+            {verificationStatus !== "VERIFIED" && (
+              <p className="text-xs text-gray-600 mt-2">
+                <span className="text-red-500">*</span> WhatsApp number verification is required to create the ad set.
+              </p>
+            )}
           </div>
 
           <div className="border-t pt-6">
@@ -565,7 +708,7 @@ export default function WhatsAppAdSet() {
               </div>
             )}
 
-            {/* Display All Custom Locations */}
+            {/* Display All Custom Locations - Each card is an accordion */}
             {customLocations.length > 0 && (
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
@@ -577,6 +720,7 @@ export default function WhatsAppAdSet() {
                     onClick={() => {
                       setCustomLocations([]);
                       setSelectedPlace(null);
+                      setExpandedLocations(new Set());
                     }}
                     className="text-xs text-red-600 hover:text-red-800 font-medium"
                   >
@@ -584,78 +728,121 @@ export default function WhatsAppAdSet() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {customLocations.map((loc, idx) => (
-                    <div key={idx} className="bg-white p-3 border border-blue-200 rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          {loc.name && (
-                            <div className="font-semibold text-gray-900 text-sm mb-1">
-                              {loc.name}
-                            </div>
-                          )}
-                          {loc.address && (
-                            <div className="text-xs text-gray-600 mb-1">
-                              {loc.address}
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-500">
-                            <span className="font-mono">Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}</span>
-                          </div>
-                        </div>
+                  {customLocations.map((loc, idx) => {
+                    const isExpanded = expandedLocations.has(idx);
+                    return (
+                      <div key={idx} className="bg-white border border-blue-200 rounded-lg overflow-hidden">
+                        {/* Accordion Header for each location card */}
                         <button
                           type="button"
                           onClick={() => {
-                            setCustomLocations(customLocations.filter((_, i) => i !== idx));
-                          }}
-                          className="ml-2 text-gray-400 hover:text-red-600"
-                          title="Remove location"
-                        >
-                          <FiX className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <label className="text-xs text-gray-700 whitespace-nowrap">
-                          Radius:
-                        </label>
-                        <input
-                          type="number"
-                          min="2"
-                          max="17"
-                          value={loc.radius}
-                          onChange={(e) => {
-                            const newLocations = [...customLocations];
-                            const newRadius = parseInt(e.target.value);
-                            // Validate and clamp radius between 2 and 17
-                            if (!isNaN(newRadius)) {
-                              if (newRadius < 2) {
-                                newLocations[idx].radius = 2;
-                              } else if (newRadius > 17) {
-                                newLocations[idx].radius = 17;
-                              } else {
-                                newLocations[idx].radius = newRadius;
-                              }
+                            const newExpanded = new Set(expandedLocations);
+                            if (isExpanded) {
+                              newExpanded.delete(idx);
                             } else {
-                              newLocations[idx].radius = 5; // Default if invalid
+                              newExpanded.add(idx);
                             }
-                            setCustomLocations(newLocations);
+                            setExpandedLocations(newExpanded);
                           }}
-                          onBlur={(e) => {
-                            // Ensure value is within range on blur
-                            const newLocations = [...customLocations];
-                            const radius = parseInt(e.target.value);
-                            if (isNaN(radius) || radius < 2) {
-                              newLocations[idx].radius = 2;
-                            } else if (radius > 17) {
-                              newLocations[idx].radius = 17;
-                            }
-                            setCustomLocations(newLocations);
-                          }}
-                          className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        <span className="text-xs text-gray-600">km</span>
+                          className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex-1 text-left">
+                            {loc.name && (
+                              <div className="font-semibold text-gray-900 text-sm mb-1">
+                                {loc.name}
+                              </div>
+                            )}
+                            {loc.address && (
+                              <div className="text-xs text-gray-600">
+                                {loc.address}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-3">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCustomLocations(customLocations.filter((_, i) => i !== idx));
+                                const newExpanded = new Set(expandedLocations);
+                                newExpanded.delete(idx);
+                                // Adjust indices for remaining items
+                                const adjustedExpanded = new Set();
+                                newExpanded.forEach((expandedIdx) => {
+                                  if (expandedIdx > idx) {
+                                    adjustedExpanded.add(expandedIdx - 1);
+                                  } else if (expandedIdx < idx) {
+                                    adjustedExpanded.add(expandedIdx);
+                                  }
+                                });
+                                setExpandedLocations(adjustedExpanded);
+                              }}
+                              className="text-gray-400 hover:text-red-600"
+                              title="Remove location"
+                            >
+                              <FiX className="w-4 h-4" />
+                            </button>
+                            {isExpanded ? (
+                              <FiChevronUp className="w-5 h-5 text-gray-600" />
+                            ) : (
+                              <FiChevronDown className="w-5 h-5 text-gray-600" />
+                            )}
+                          </div>
+                        </button>
+                        {/* Accordion Content - Details and Radius */}
+                        {isExpanded && (
+                          <div className="px-3 pb-3 border-t border-gray-200">
+                            <div className="pt-3 space-y-2">
+                              <div className="text-xs text-gray-500">
+                                <span className="font-mono">Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs text-gray-700 whitespace-nowrap">
+                                  Radius:
+                                </label>
+                                <input
+                                  type="number"
+                                  min="2"
+                                  max="17"
+                                  value={loc.radius}
+                                  onChange={(e) => {
+                                    const newLocations = [...customLocations];
+                                    const newRadius = parseInt(e.target.value);
+                                    // Validate and clamp radius between 2 and 17
+                                    if (!isNaN(newRadius)) {
+                                      if (newRadius < 2) {
+                                        newLocations[idx].radius = 2;
+                                      } else if (newRadius > 17) {
+                                        newLocations[idx].radius = 17;
+                                      } else {
+                                        newLocations[idx].radius = newRadius;
+                                      }
+                                    } else {
+                                      newLocations[idx].radius = 5; // Default if invalid
+                                    }
+                                    setCustomLocations(newLocations);
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure value is within range on blur
+                                    const newLocations = [...customLocations];
+                                    const radius = parseInt(e.target.value);
+                                    if (isNaN(radius) || radius < 2) {
+                                      newLocations[idx].radius = 2;
+                                    } else if (radius > 17) {
+                                      newLocations[idx].radius = 17;
+                                    }
+                                    setCustomLocations(newLocations);
+                                  }}
+                                  className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <span className="text-xs text-gray-600">km</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
